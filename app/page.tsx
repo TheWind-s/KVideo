@@ -4,6 +4,7 @@ import { Suspense, useMemo } from 'react';
 import { SearchForm } from '@/components/search/SearchForm';
 import { NoResults } from '@/components/search/NoResults';
 import { PopularFeatures } from '@/components/home/PopularFeatures';
+import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { Navbar } from '@/components/layout/Navbar';
 import { SearchResults } from '@/components/home/SearchResults';
@@ -58,6 +59,13 @@ function HomePage() {
           totalSources={totalSources}
         />
       </div>
+
+      {/* Hero Carousel - Only show on homepage (no search) */}
+      {!hasSearched && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <HeroCarousel />
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">

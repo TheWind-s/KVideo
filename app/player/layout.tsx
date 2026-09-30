@@ -9,5 +9,14 @@ export default function PlayerLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return children;
+    return (
+        <>
+            {/* Google Cast SDK - only needed on player page */}
+            <script
+                src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"
+                async
+            />
+            {children}
+        </>
+    );
 }
