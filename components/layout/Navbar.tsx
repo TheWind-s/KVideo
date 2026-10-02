@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { NavAdBanner } from '@/components/layout/NavAdBanner';
 import { useSiteIcon } from '@/components/SiteIconProvider';
 import { Icons } from '@/components/ui/Icon';
 import { siteConfig } from '@/lib/config/site-config';
@@ -65,6 +66,9 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                                 <p className="text-xs text-[var(--text-color-secondary)] hidden sm:block truncate">{siteConfig.description}</p>
                             </div>
                         </Link>
+
+                        {/* 中部广告/公告轮播位（手机竖屏隐藏，避免挤压品牌区） */}
+                        <NavAdBanner />
 
                         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                             {/* IPTV Link - only show if user has iptv_access or no auth configured */}
