@@ -4,6 +4,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { SearchForm } from '@/components/search/SearchForm';
 import { NoResults } from '@/components/search/NoResults';
 import { PopularFeatures } from '@/components/home/PopularFeatures';
+import { ShortDramaSection } from '@/components/home/ShortDramaSection';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { ContentTypeToggle, type ContentType } from '@/components/home/ContentTypeToggle';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
@@ -90,13 +91,15 @@ function HomePage() {
 
         {/* Popular Features - Homepage */}
         {!loading && !hasSearched && (
-          <>
+          contentType === 'short' ? (
+            <ShortDramaSection />
+          ) : (
             <PopularFeatures
               onSearch={handleSearch}
               contentType={contentType}
               onContentTypeChange={setContentType}
             />
-          </>
+          )
         )}
 
         {/* No Results */}
