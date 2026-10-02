@@ -37,6 +37,9 @@ class MainActivity : ComponentActivity() {
         private const val PREFS_NAME = "kvideo_tv_settings"
         private const val PREF_SERVER_URL = "server_url"
         private const val TAG = "KVideoMainActivity"
+
+        // Fixed server endpoint; users cannot change it in the app.
+        private const val DEFAULT_SERVER_URL = "https://kvideo-d38.pages.dev"
     }
 
     private lateinit var webView: WebView
@@ -142,13 +145,9 @@ class MainActivity : ComponentActivity() {
             addJavascriptInterface(AndroidPlayerBridge(), "KVideoAndroid")
         }
 
-        val configuredUrl = getConfiguredUrl()
-        if (configuredUrl.isNotEmpty()) {
-            urlInput.setText(configuredUrl)
-            loadConfiguredUrl(configuredUrl)
-        } else {
-            showSetup(getString(R.string.status_first_launch))
-        }
+        // Always open the fixed server URL; the setup/URL input screen is never shown.
+        urlInput.setText(DEFAULT_SERVER_URL)
+        loadConfiguredUrl(DEFAULT_SERVER_URL)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -157,10 +156,7 @@ class MainActivity : ComponentActivity() {
             return true
         }
 
-        if (!isSetupVisible() && (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_SETTINGS)) {
-            showSetup(getString(R.string.status_settings_hint))
-            return true
-        }
+        // Setup screen is disabled (fixed server URL); menu/settings keys are not intercepted.
 
         // Map D-pad center to Enter for spatial navigation
         if (!isSetupVisible() && keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
@@ -194,7 +190,8 @@ class MainActivity : ComponentActivity() {
         if (webView.canGoBack()) {
             webView.goBack()
         } else {
-            showSetup(getString(R.string.status_settings_hint))
+            // Already at the root page: exit the app instead of opening setup.
+            finish()
         }
     }
 

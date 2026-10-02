@@ -28,7 +28,7 @@
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:exported="true"
-            android:screenOrientation="landscape"
+            android:screenOrientation="fullSensor"
             android:supportsPictureInPicture="true"
             android:windowSoftInputMode="adjustResize">
 
