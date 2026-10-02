@@ -13,113 +13,24 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
-  const [mounted, setMounted] = useState(false);
-  const transitionRef = React.useRef<any>(null);
+  // 主题切换入口已下线，全站恒定亮色
+  const [theme] = useState<Theme>('light');
+  const [actualTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    setMounted(true);
-    // Theme switcher is hidden: force light for everyone and overwrite
-    // any previously saved dark/system preference.
-    setTheme('light');
+    // 覆盖老用户残留的 dark/system 偏好，直接摘掉 dark 类。
+    // 不使用 View Transition：整页快照在部分 Chromium/WebView 版本上
+    // 会露出黑色快照间隙（偶发全黑）。
+    document.documentElement.classList.remove('dark');
+    try {
+      localStorage.setItem('theme', 'light');
+    } catch {
+      // 隐私模式等场景忽略写入失败
+    }
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-
-    const applyTheme = (newTheme?: 'light' | 'dark') => {
-      const themeToApply = newTheme || (theme === 'system' 
-        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-        : theme);
-      
-      setActualTheme(themeToApply);
-      document.documentElement.classList.toggle('dark', themeToApply === 'dark');
-    };
-
-    const applyThemeWithTransition = () => {
-      // Abort previous transition if it exists
-      if (transitionRef.current) {
-        try {
-          transitionRef.current.skipTransition();
-        } catch (e) {
-          // Ignore if transition already finished
-        }
-      }
-
-      // Check if document is visible - skip transition if hidden
-      if (document.hidden) {
-        applyTheme();
-        return;
-      }
-
-      // Check if View Transition API is supported
-      // @ts-ignore - View Transition API is experimental
-      if (typeof document.startViewTransition === 'function') {
-        try {
-          // @ts-ignore
-          transitionRef.current = document.startViewTransition(() => {
-            applyTheme();
-          });
-          
-          // Clear ref after transition completes or fails
-          if (transitionRef.current) {
-            transitionRef.current.finished
-              .then(() => { transitionRef.current = null; })
-              .catch((error: Error) => { 
-                // Silently handle transition errors (visibility changes, etc.)
-                transitionRef.current = null;
-              });
-          }
-        } catch (error) {
-          // Fallback if transition fails to start
-          applyTheme();
-        }
-      } else {
-        // Fallback for browsers that don't support View Transition API
-        applyTheme();
-      }
-    };
-
-    applyThemeWithTransition();
-    localStorage.setItem('theme', theme);
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = () => {
-      if (theme === 'system') {
-        applyThemeWithTransition();
-      }
-    };
-    
-    // Listen for visibility changes to abort transitions
-    const handleVisibilityChange = () => {
-      if (document.hidden && transitionRef.current) {
-        try {
-          transitionRef.current.skipTransition();
-        } catch (e) {
-          // Ignore
-        }
-        transitionRef.current = null;
-      }
-    };
-    
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      // Abort any pending transition on unmount
-      if (transitionRef.current) {
-        try {
-          transitionRef.current.skipTransition();
-        } catch (e) {
-          // Ignore
-        }
-      }
-    };
-  }, [theme, mounted]);
+  // 保留兼容签名：无论调用方传什么，都保持亮色
+  const setTheme = () => {};
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, actualTheme }}>
@@ -131,7 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 }

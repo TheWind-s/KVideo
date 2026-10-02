@@ -1,5 +1,8 @@
 /* CSS Custom Properties */
 :root {
+    /* 锁定亮色配色方案，避免表单/滚动条等原生控件跟随系统深色 */
+    color-scheme: light;
+
     --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
 
     /* Light Mode Palette */
@@ -41,6 +44,17 @@
 
     --background: #f2f4f7;
     --foreground: #1d1d1f;
+}
+
+/*
+ * html 与 body 双层强制亮色底。
+ * 仅在 body 上设置背景时，Android WebView 在切后台恢复、GPU 合成层回收、
+ * 下拉/边缘回弹等时机可能短暂露出底层黑色（偶发"全黑"bug）。
+ * html 直接铺底色可避免 body 背景向视口传播失效。
+ */
+html {
+    background-color: #f2f4f7;
+    color-scheme: light;
 }
 
 body {

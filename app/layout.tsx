@@ -99,10 +99,16 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="KVideo" />
         <link rel="apple-touch-icon" href={siteIconSrc} />
-        {/* Theme Color (for browser address bar) */}
-        <meta name="theme-color" content="#000000" />
+        {/* Theme Color (for browser address bar) —— 锁定亮色底，避免状态栏/地址栏发黑 */}
+        <meta name="theme-color" content="#f2f4f7" />
         {/* Mobile viewport */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* 首帧前强制 html 亮色底，抢在 CSS 解析与页面内容绘制之前，消除 WebView/浏览器黑底空隙 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var h=document.documentElement;h.style.backgroundColor='#f2f4f7';h.style.colorScheme='light';}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         className="antialiased"
