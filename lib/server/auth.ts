@@ -9,7 +9,6 @@ import {
   isBootstrapAdminCredential,
   normalizeUsername,
   parseBootstrapAccounts,
-  resolveLoginMode,
   shouldUseSecureSessionCookie,
   signSessionPayload,
   verifyPassword,
@@ -227,19 +226,13 @@ function getPublicRuntimeConfig(): Omit<PublicAuthConfig, 'hasAuth' | 'hasPremiu
 }
 
 export async function getPublicAuthConfig(): Promise<PublicAuthConfig> {
-  const managedAuthEnabled = isManagedAuthEnabled();
-  const managedAccountCount = await getManagedAccountCount();
-  const loginMode = resolveLoginMode({
-    managedAccountCount,
-    managedAuthEnabled,
-    managedAuthForced: getRuntimeEnvValue('MANAGED_AUTH_ENABLED') === 'true' || MANAGED_AUTH_FORCED,
-    legacyAuthConfigured: isLegacyAuthConfigured(),
-  });
-
+  // Access password is permanently disabled for this deployment: the site is
+  // public and the frontend PasswordGate must always stay unlocked, regardless
+  // of any ADMIN_PASSWORD / ACCOUNTS / Redis-related environment variables.
   return {
-    hasAuth: loginMode !== 'none',
+    hasAuth: false,
     hasPremiumAuth: !!PREMIUM_PASSWORD,
-    loginMode,
+    loginMode: 'none',
     ...getPublicRuntimeConfig(),
   };
 }

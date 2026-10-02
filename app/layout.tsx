@@ -120,16 +120,8 @@ export default async function RootLayout({
 
               <TVProvider>
                 <TVNavigationInitializer />
-                <PasswordGate hasAuth={!!(
-                  process.env.ADMIN_PASSWORD ||
-                  process.env.ACCOUNTS ||
-                  process.env.ACCESS_PASSWORD ||
-                  (
-                    process.env.AUTH_SECRET &&
-                    process.env.UPSTASH_REDIS_REST_URL &&
-                    process.env.UPSTASH_REDIS_REST_TOKEN
-                  )
-                )}>
+                {/* Access password hard-disabled: gate always stays unlocked. */}
+                <PasswordGate hasAuth={false}>
                   <AutoSync />
                   <AdKeywordsWrapper />
                   {children}
