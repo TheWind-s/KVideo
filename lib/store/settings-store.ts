@@ -81,17 +81,30 @@ export const getDefaultPremiumSources = (): VideoSource[] => PREMIUM_SOURCES;
 
 
 
+// Bundled same-origin source catalogue: always reachable even when external
+// hosts (e.g. raw.githubusercontent.com) are blocked on the client network.
+const BUILTIN_SUBSCRIPTION_URL = '/default-sources.json';
+
+function withBuiltinSubscription(subscriptions: SourceSubscription[]): SourceSubscription[] {
+  if (subscriptions.some((item) => item.url === BUILTIN_SUBSCRIPTION_URL)) {
+    return subscriptions;
+  }
+  return [...subscriptions, createSubscription('内置视频源', BUILTIN_SUBSCRIPTION_URL)];
+}
+
 function getEnvSubscriptions(customValue?: string): SourceSubscription[] {
   const envValue = (customValue || process.env.SUBSCRIPTION_SOURCES || process.env.NEXT_PUBLIC_SUBSCRIPTION_SOURCES || '').trim();
-  if (!envValue) return [];
+  if (!envValue) return withBuiltinSubscription([]);
 
   // 1. Try JSON
   try {
     const raw = JSON.parse(envValue);
     if (Array.isArray(raw)) {
-      return raw
-        .filter((item: any) => item && typeof item.name === 'string' && typeof item.url === 'string')
-        .map((item: any) => createSubscription(item.name, item.url));
+      return withBuiltinSubscription(
+        raw
+          .filter((item: any) => item && typeof item.name === 'string' && typeof item.url === 'string')
+          .map((item: any) => createSubscription(item.name, item.url))
+      );
     }
   } catch (e) {
     // Ignore JSON parse error, try direct URL
@@ -101,7 +114,7 @@ function getEnvSubscriptions(customValue?: string): SourceSubscription[] {
   // Check if it looks like a URL (basic check)
   if (envValue.includes('http')) {
     const urls = envValue.split(',').map(u => u.trim()).filter(u => u.length > 0);
-    return urls.map((url, index) => {
+    return withBuiltinSubscription(urls.map((url, index) => {
       // Basic URL validation
       if (!url.startsWith('http')) return null;
 
@@ -110,10 +123,10 @@ function getEnvSubscriptions(customValue?: string): SourceSubscription[] {
         : `系统预设源`;
 
       return createSubscription(name, url);
-    }).filter((s): s is SourceSubscription => s !== null);
+    }).filter((s): s is SourceSubscription => s !== null));
   }
 
-  return [];
+  return withBuiltinSubscription([]);
 }
 // Debugging helper
 // console.log("Environment Subscriptions:", getEnvSubscriptions());
