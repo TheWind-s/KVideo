@@ -26,10 +26,11 @@ function HomePage() {
     handleCancelSearch,
   } = useHomePage();
 
-  // Movie / TV selector — lifted here so it can share the search row
+  // 电影 / 电视剧 / 短剧 选择器 —— 提升到页面层以便与搜索框共用同一行
   const [contentType, setContentType] = useState<ContentType>(() => {
     if (typeof window === 'undefined') return 'movie';
-    return localStorage.getItem('kvideo_default_content_type') === 'tv' ? 'tv' : 'movie';
+    const saved = localStorage.getItem('kvideo_default_content_type');
+    return saved === 'tv' || saved === 'short' ? saved : 'movie';
   });
 
   // Real-time latency pinging

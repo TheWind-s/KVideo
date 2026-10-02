@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import type { Tag } from '../SortableTag';
+import type { ContentType } from '../ContentTypeToggle';
 
 const DEFAULT_TAG = { id: 'popular', label: '热门', value: '热门' };
 
@@ -20,15 +21,15 @@ const ensureDefaultTag = (tags: Tag[]) => {
 };
 
 interface ControlledContentType {
-    contentType: 'movie' | 'tv';
-    setContentType: (value: 'movie' | 'tv') => void;
+    contentType: ContentType;
+    setContentType: (value: ContentType) => void;
 }
 
 export function useTagManager(controlled?: ControlledContentType) {
-    const [internalContentType, setInternalContentType] = useState<'movie' | 'tv'>(() => {
+    const [internalContentType, setInternalContentType] = useState<ContentType>(() => {
         if (typeof window === 'undefined') return 'movie';
         const saved = localStorage.getItem('kvideo_default_content_type');
-        return saved === 'tv' ? 'tv' : 'movie';
+        return saved === 'tv' || saved === 'short' ? saved : 'movie';
     });
     const contentType = controlled ? controlled.contentType : internalContentType;
     const setContentType = controlled ? controlled.setContentType : setInternalContentType;
@@ -48,6 +49,14 @@ export function useTagManager(controlled?: ControlledContentType) {
 
     // Load custom tags or fetch from Douban
     useEffect(() => {
+        // 短剧走视频源并行搜索，豆瓣没有短剧标签，直接短路避免无效请求
+        if (contentType === 'short') {
+            setTags([]);
+            setSelectedTag(DEFAULT_TAG.id);
+            setIsLoadingTags(false);
+            return;
+        }
+
         const loadTags = async () => {
             const saved = localStorage.getItem(storageKey);
             if (saved) {

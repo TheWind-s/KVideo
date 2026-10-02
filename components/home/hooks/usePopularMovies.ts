@@ -11,13 +11,15 @@ interface DoubanMovie {
 
 const PAGE_LIMIT = 20;
 
-export function usePopularMovies(selectedTag: string, tags: any[], contentType: 'movie' | 'tv' = 'movie') {
+export function usePopularMovies(selectedTag: string, tags: any[], contentType: 'movie' | 'tv' | 'short' = 'movie') {
     const [movies, setMovies] = useState<DoubanMovie[]>([]);
     const [loading, setLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
 
     const loadMovies = useCallback(async (tag: string, pageStart: number, append = false) => {
+        // 短剧由 useShortDramas 走视频源搜索，这里不请求豆瓣
+        if (contentType === 'short') return;
         if (loading) return;
 
         setLoading(true);
