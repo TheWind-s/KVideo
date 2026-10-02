@@ -9,6 +9,7 @@ import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { ContentTypeToggle, type ContentType } from '@/components/home/ContentTypeToggle';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { Navbar } from '@/components/layout/Navbar';
+import { NavAdBanner } from '@/components/layout/NavAdBanner';
 import { SearchResults } from '@/components/home/SearchResults';
 import { useHomePage } from '@/lib/hooks/useHomePage';
 import { useLatencyPing } from '@/lib/hooks/useLatencyPing';
@@ -52,6 +53,9 @@ function HomePage() {
       {/* Glass Navbar */}
       <Navbar onReset={handleReset} />
 
+      {/* 顶部广告条 —— 标题栏下方，文字超宽自动横向滚动 */}
+      <NavAdBanner />
+
       {/* Hero Banner - top of the page */}
       {!hasSearched && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-6">
@@ -59,10 +63,12 @@ function HomePage() {
         </div>
       )}
 
-      {/* Search Form + Movie/TV Toggle - same row */}
+      {/* Search Form + Movie/TV Toggle - same row（搜索后折叠类型切换器，搜索栏独占整行） */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-2 sm:gap-4">
-          <ContentTypeToggle value={contentType} onChange={setContentType} />
+          {!hasSearched && (
+            <ContentTypeToggle value={contentType} onChange={setContentType} />
+          )}
           <SearchForm
             inline
             onSearch={handleSearch}

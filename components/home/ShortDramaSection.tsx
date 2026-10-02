@@ -2,13 +2,13 @@
  * ShortDramaSection - 短剧频道
  *
  * 短剧走视频源原生分类浏览（而非关键词按片名搜索）：
- * 第一行选择视频源，第二行选择该源短剧分类下的子标签，
- * 网格无限滚动加载分类影片。
+ * 视频源自动选择（不展示源切换行），仅展示子分类标签行，
+ * 网格无限滚动加载分类影片；当前源"全部"分类为空时自动回退到下一个源。
  */
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { VideoGrid } from '@/components/search/VideoGrid';
 import { Icons } from '@/components/ui/Icon';
 import { useShortDramaSources } from './hooks/useShortDramaSources';
@@ -69,6 +69,37 @@ export function ShortDramaSection() {
     const { videos, loading, loadingMore, hasMore, prefetchRef, loadMoreRef } =
         useShortDramas(selectedSource, activeTypeId);
 
+    // 源对用户不可见，需要自动回退：当前源"全部"分类加载完仍为空 → 换下一个未试过的源。
+    // stateRef 保证超时回调里读到的是最新状态；空窗帧（loading 尚未置 true）会被清除重排。
+    const stateRef = useRef({ loading, videos, tagId, selectedSource, sources });
+    stateRef.current = { loading, videos, tagId, selectedSource, sources };
+    const triedSourcesRef = useRef<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (sourcesLoading || !selectedSource) return;
+        if (loading || videos.length > 0) return;
+
+        const timer = setTimeout(() => {
+            const s = stateRef.current;
+            if (s.loading || s.videos.length > 0) return; // 已有内容/正在加载
+            if (s.tagId !== ALL_TAG) return;              // 仅"全部"分类触发回退，具体子分类为空就如实展示
+            const currentSource = s.selectedSource;
+            if (!currentSource) return;
+            if (triedSourcesRef.current.has(currentSource.sourceId)) {
+                const retry = sources.find((x) => !triedSourcesRef.current.has(x.sourceId));
+                if (!retry) return; // 全部试过，保持空态
+            }
+            const next =
+                sources.find((x) => !triedSourcesRef.current.has(x.sourceId) && x.sourceId !== currentSource.sourceId) ??
+                sources.find((x) => x.sourceId !== currentSource.sourceId);
+            if (next) {
+                triedSourcesRef.current.add(currentSource.sourceId);
+                setSourceId(next.sourceId);
+            }
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [sources, sourcesLoading, selectedSource, loading, videos, tagId]);
+
     // 正在探测可用源
     if (sourcesLoading && sources.length === 0) {
         return (
@@ -93,19 +124,7 @@ export function ShortDramaSection() {
 
     return (
         <div className="animate-fade-in">
-            {/* 视频源选择行（横向滚动） */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-2">
-                {sources.map((s) => (
-                    <button
-                        key={s.sourceId}
-                        type="button"
-                        onClick={() => setSourceId(s.sourceId)}
-                        className={chipClass(s.sourceId === sourceId)}
-                    >
-                        {s.sourceName}
-                    </button>
-                ))}
-            </div>
+            {/* 视频源自动选择，不展示源切换行 */}
 
             {/* 子分类标签行：无子分类时仅显示"全部" */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-5">

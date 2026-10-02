@@ -83,3 +83,14 @@
         background-position: 100% 50%;
     }
 }
+
+/* 顶部广告条：文字超宽时横向滚动（终点由 --marquee-x 变量注入） */
+@keyframes ad-marquee {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(var(--marquee-x, -100%));
+    }
+}

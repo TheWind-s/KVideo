@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { NavAdBanner } from '@/components/layout/NavAdBanner';
 import { useSiteIcon } from '@/components/SiteIconProvider';
 import { Icons } from '@/components/ui/Icon';
 import { siteConfig } from '@/lib/config/site-config';
@@ -66,8 +65,7 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                             </div>
                         </Link>
 
-                        {/* 中部广告/公告轮播位（手机竖屏隐藏，避免挤压品牌区） */}
-                        <NavAdBanner />
+                        {/* 顶部广告条已移至标题栏下方（page.tsx） */}
 
                         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                             {/* IPTV Link - only show if user has iptv_access or no auth configured */}
