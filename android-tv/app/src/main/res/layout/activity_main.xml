@@ -7,7 +7,8 @@
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:background="#000000" />
 
     <ScrollView
         android:id="@+id/setup_container"
@@ -112,6 +113,54 @@
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
+
+    <!-- Black mask shown briefly during back navigation to cover the
+         WebView bfcache restore white flash -->
+    <View
+        android:id="@+id/back_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:visibility="gone" />
+
+    <!-- Network / load error overlay -->
+    <LinearLayout
+        android:id="@+id/error_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#0D0F14"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="40dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="无法连接服务器"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/error_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:text="请检查网络连接后重试"
+            android:textColor="#9EA7BA"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/retry_button"
+            android:layout_width="220dp"
+            android:layout_height="54dp"
+            android:layout_marginTop="30dp"
+            android:text="重新加载"
+            android:textAllCaps="false"
+            android:textSize="18sp" />
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/fullscreen_container"

@@ -3,5 +3,7 @@
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:colorBackground">#000000</item>
+        <!-- Black window background prevents white flash on launch and page transitions -->
+        <item name="android:windowBackground">#000000</item>
     </style>
 </resources>

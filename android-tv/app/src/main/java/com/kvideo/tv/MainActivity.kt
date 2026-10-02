@@ -18,6 +18,8 @@ import android.view.inputmethod.EditorInfo
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebChromeClient.CustomViewCallback
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -25,7 +27,9 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.addCallback
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,11 +44,33 @@ class MainActivity : ComponentActivity() {
 
         // Fixed server endpoint; users cannot change it in the app.
         private const val DEFAULT_SERVER_URL = "https://kvideo-d38.pages.dev"
+
+        // Applied at the very start of every navigation: forces the dark theme
+        // and paints a dark base frame, eliminating the white FOUC the site shows
+        // before React hydrates and adds the .dark class.
+        private const val ANTI_FLASH_JS = """
+            (function () {
+              try { localStorage.setItem('theme', 'dark'); } catch (e) {}
+              document.documentElement.classList.add('dark');
+              if (!document.getElementById('__kv_antiflash')) {
+                var s = document.createElement('style');
+                s.id = '__kv_antiflash';
+                s.textContent = 'html,body{background-color:#121212!important;' +
+                  'background-image:linear-gradient(120deg,#1a1a1a 0%,#121212 100%)!important;' +
+                  'color-scheme:dark;}';
+                (document.head || document.documentElement).appendChild(s);
+              }
+            })();
+        """
     }
 
     private lateinit var webView: WebView
     private lateinit var setupContainer: View
     private lateinit var fullscreenContainer: FrameLayout
+    private lateinit var errorContainer: View
+    private lateinit var errorDetailText: TextView
+    private lateinit var retryButton: Button
+    private lateinit var backOverlay: View
     private lateinit var urlInput: EditText
     private lateinit var statusText: TextView
     private lateinit var openButton: Button
@@ -53,6 +79,19 @@ class MainActivity : ComponentActivity() {
     private var customView: View? = null
     private var customViewCallback: CustomViewCallback? = null
     private var wasSetupVisibleBeforeFullscreen = false
+    private var lastBackPressedAt = 0L
+
+    private val hideBackOverlayRunnable = Runnable {
+        if (!::backOverlay.isInitialized) return@Runnable
+        backOverlay.animate().cancel()
+        backOverlay.animate()
+            .alpha(0f)
+            .setDuration(120)
+            .withEndAction {
+                backOverlay.visibility = View.GONE
+                backOverlay.alpha = 1f
+            }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,10 +105,19 @@ class MainActivity : ComponentActivity() {
         webView = findViewById(R.id.webview)
         setupContainer = findViewById(R.id.setup_container)
         fullscreenContainer = findViewById(R.id.fullscreen_container)
+        errorContainer = findViewById(R.id.error_container)
+        errorDetailText = findViewById(R.id.error_detail)
+        retryButton = findViewById(R.id.retry_button)
+        backOverlay = findViewById(R.id.back_overlay)
         urlInput = findViewById(R.id.url_input)
         statusText = findViewById(R.id.status_text)
         openButton = findViewById(R.id.open_button)
         saveButton = findViewById(R.id.save_button)
+
+        retryButton.setOnClickListener {
+            errorContainer.visibility = View.GONE
+            webView.reload()
+        }
 
         saveButton.setOnClickListener {
             openConfiguredUrl()
@@ -94,7 +142,10 @@ class MainActivity : ComponentActivity() {
         }
 
         webView.apply {
-            setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            // NOTE: no setLayerType(HARDWARE) here. Forcing a hardware layer on the
+            // whole WebView causes a white compositing flash during back/forward
+            // navigation. WebView is already hardware accelerated by the manifest.
+            setBackgroundColor(android.graphics.Color.BLACK)
 
             settings.apply {
                 javaScriptEnabled = true
@@ -105,9 +156,47 @@ class MainActivity : ComponentActivity() {
                 cacheMode = WebSettings.LOAD_DEFAULT
                 mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 databaseEnabled = true
+                // Keep back/forward pages rasterised off-screen to avoid flicker
+                offscreenPreRaster = true
             }
 
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                    errorContainer.visibility = View.GONE
+                    // Inject dark theme before the first paint so back/forward
+                    // navigation never shows the site's default light background.
+                    view?.evaluateJavascript(ANTI_FLASH_JS, null)
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    // Cross-document back restored: drop the mask as soon as
+                    // the page is painted; the 320ms timer remains as a fallback.
+                    backOverlay.removeCallbacks(hideBackOverlayRunnable)
+                    backOverlay.postDelayed(hideBackOverlayRunnable, 60)
+                }
+
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    // Only react to main-frame failures; ignore broken iframes/ads
+                    if (request?.isForMainFrame != true) return
+                    showLoadError(describeError(error?.errorCode), error?.description?.toString())
+                }
+
+                override fun onReceivedHttpError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    errorResponse: android.webkit.WebResourceResponse?
+                ) {
+                    if (request?.isForMainFrame != true) return
+                    val code = errorResponse?.statusCode ?: 0
+                    if (code in 400..599) {
+                        showLoadError("服务器错误（HTTP $code）", null)
+                    }
+                }
+            }
             webChromeClient = object : WebChromeClient() {
                 override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                     if (view == null || callback == null) {
@@ -148,15 +237,47 @@ class MainActivity : ComponentActivity() {
         // Always open the fixed server URL; the setup/URL input screen is never shown.
         urlInput.setText(DEFAULT_SERVER_URL)
         loadConfiguredUrl(DEFAULT_SERVER_URL)
+
+        // Modern back handling via OnBackPressedDispatcher: works reliably on
+        // Android 8-14 (including TV remotes and Android 14 predictive back),
+        // unlike the deprecated onBackPressed() override.
+        onBackPressedDispatcher.addCallback(this) {
+            handleBackPress()
+        }
+    }
+
+    private fun handleBackPress() {
+        // 1) Exit video fullscreen first
+        if (customView != null) {
+            exitCustomFullscreen()
+            return
+        }
+
+        // 2) Navigate back inside the WebView (covers SPA history.pushState).
+        // Cover with an opaque black mask during bfcache restore to hide the
+        // white compositing flash the system WebView emits on back navigation.
+        if (webView.canGoBack()) {
+            backOverlay.removeCallbacks(hideBackOverlayRunnable)
+            backOverlay.alpha = 1f
+            backOverlay.visibility = View.VISIBLE
+            webView.goBack()
+            // Same-document SPA backs fire no page callbacks; hide on a timer too.
+            backOverlay.postDelayed(hideBackOverlayRunnable, 320)
+            return
+        }
+
+        // 3) Already at root: double-press to exit
+        val now = System.currentTimeMillis()
+        if (now - lastBackPressedAt < 2000) {
+            finish()
+        } else {
+            lastBackPressedAt = now
+            Toast.makeText(this, "再按一次退出洋芋影视", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (!isSetupVisible() && keyCode == KeyEvent.KEYCODE_BACK && customView != null) {
-            exitCustomFullscreen()
-            return true
-        }
-
-        // Setup screen is disabled (fixed server URL); menu/settings keys are not intercepted.
+        // BACK is handled by OnBackPressedDispatcher (see handleBackPress).
 
         // Map D-pad center to Enter for spatial navigation
         if (!isSetupVisible() && keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
@@ -172,27 +293,6 @@ class MainActivity : ComponentActivity() {
             return true
         }
         return super.onKeyUp(keyCode, event)
-    }
-
-    @Deprecated("Use OnBackPressedDispatcher")
-    override fun onBackPressed() {
-        if (customView != null) {
-            exitCustomFullscreen()
-            return
-        }
-
-        if (isSetupVisible()) {
-            @Suppress("DEPRECATION")
-            super.onBackPressed()
-            return
-        }
-
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            // Already at the root page: exit the app instead of opening setup.
-            finish()
-        }
     }
 
     override fun onResume() {
@@ -239,7 +339,30 @@ class MainActivity : ComponentActivity() {
     private fun loadConfiguredUrl(url: String) {
         setupContainer.visibility = View.GONE
         statusText.text = getString(R.string.status_ready)
+        errorContainer.visibility = View.GONE
         webView.loadUrl(url)
+    }
+
+    private fun showLoadError(title: String, detail: String?) {
+        errorDetailText.text = buildString {
+            append("当前网络无法访问 $DEFAULT_SERVER_URL\n")
+            append(title)
+            if (!detail.isNullOrBlank()) append("（$detail）")
+            append("\n\n可尝试：切换 WiFi / 移动数据后点击重新加载")
+        }
+        errorContainer.post { errorContainer.visibility = View.VISIBLE }
+    }
+
+    private fun describeError(code: Int?): String = when (code) {
+        WebViewClient.ERROR_HOST_LOOKUP -> "域名解析失败（DNS），当前网络可能无法访问该站点"
+        WebViewClient.ERROR_CONNECT, WebViewClient.ERROR_IO -> "无法连接到服务器（连接被中断或拒绝）"
+        WebViewClient.ERROR_TIMEOUT -> "连接超时，请检查网络"
+        WebViewClient.ERROR_FAILED_SSL_HANDSHAKE -> "安全连接失败（SSL），网络可能被拦截"
+        WebViewClient.ERROR_PROXY_AUTHENTICATION -> "代理认证失败"
+        WebViewClient.ERROR_TOO_MANY_REQUESTS -> "请求过于频繁"
+        WebViewClient.ERROR_UNSUPPORTED_SCHEME -> "不支持的网址协议"
+        WebViewClient.ERROR_FILE_NOT_FOUND, WebViewClient.ERROR_REDIRECT_LOOP -> "页面资源异常"
+        else -> "网络请求失败（错误码 $code）"
     }
 
     private fun showSetup(message: String) {
