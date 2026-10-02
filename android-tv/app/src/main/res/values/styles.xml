@@ -2,8 +2,14 @@
     <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:colorBackground">#F2F4F7</item>
-        <!-- Light window background matches the site's light theme -->
-        <item name="android:windowBackground">#F2F4F7</item>
+        <!-- 冷启动首帧底色：与网页浅绿渐变顶色一致，任何阶段都不出现黑/灰底 -->
+        <item name="android:colorBackground">#F4FAF3</item>
+        <item name="android:windowBackground">#F4FAF3</item>
+        <!-- 禁止系统深色模式（Android 10/11 ForceDark）加深原生窗口与视图 -->
+        <item name="android:forceDarkAllowed">false</item>
+        <!-- 导航栏/状态栏透明，由沉浸式模式接管，避免露出黑色系统栏 -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

@@ -46,8 +46,8 @@ class MainActivity : ComponentActivity() {
         private const val DEFAULT_SERVER_URL = "https://kvideo-d38.pages.dev"
 
         // Applied at the very start of every navigation: forces the light theme
-        // and paints a light base frame, eliminating the FOUC the site shows
-        // before React hydrates.
+        // and paints the light-green base frame, eliminating the dark frame the
+        // WebView can show before the first paint (esp. on system dark mode).
         private const val ANTI_FLASH_JS = """
             (function () {
               try { localStorage.setItem('theme', 'light'); } catch (e) {}
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
               if (!document.getElementById('__kv_antiflash')) {
                 var s = document.createElement('style');
                 s.id = '__kv_antiflash';
-                s.textContent = 'html,body{background-color:#f2f4f7!important;' +
+                s.textContent = 'html,body{background-color:#f4faf3!important;' +
                   'color-scheme:light;}';
                 (document.head || document.documentElement).appendChild(s);
               }
@@ -144,7 +144,9 @@ class MainActivity : ComponentActivity() {
             // NOTE: no setLayerType(HARDWARE) here. Forcing a hardware layer on the
             // whole WebView causes a white compositing flash during back/forward
             // navigation. WebView is already hardware accelerated by the manifest.
-            setBackgroundColor(android.graphics.Color.parseColor("#F2F4F7"))
+            // 不透明浅绿底：网页首帧绘制前 WebView 自身不显示黑色（透明底在部分
+            // 机型上会透出黑色 Surface），颜色与网页渐变顶色一致。
+            setBackgroundColor(android.graphics.Color.parseColor("#F4FAF3"))
 
             settings.apply {
                 javaScriptEnabled = true
@@ -159,11 +161,20 @@ class MainActivity : ComponentActivity() {
                 offscreenPreRaster = true
             }
 
+            // 锁死浅色渲染：即使手机系统开启深色模式，WebView 也不自动加深页面、
+            // prefers-color-scheme 恒为 light（全 API 21+，由 androidx.webkit 兜底）
+            try {
+                androidx.webkit.WebSettingsCompat.setAlgorithmicDarkeningAllowed(
+                    settings, false
+                )
+            } catch (error: Throwable) {
+                Log.w(TAG, "setAlgorithmicDarkeningAllowed unavailable", error)
+            }
+
             webViewClient = object : WebViewClient() {
                 override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                     errorContainer.visibility = View.GONE
-                    // Inject dark theme before the first paint so back/forward
-                    // navigation never shows the site's default light background.
+                    // 首帧前注入浅色锁定脚本，前进/后退/冷启动都不会出现深色底
                     view?.evaluateJavascript(ANTI_FLASH_JS, null)
                 }
 

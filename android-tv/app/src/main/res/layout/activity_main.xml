@@ -2,13 +2,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F2F4F7">
+    android:background="#F4FAF3">
 
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F2F4F7" />
+        android:background="#F4FAF3" />
 
     <ScrollView
         android:id="@+id/setup_container"
@@ -120,7 +120,7 @@
         android:id="@+id/back_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F2F4F7"
+        android:background="#F4FAF3"
         android:visibility="gone" />
 
     <!-- Network / load error overlay -->
@@ -128,7 +128,7 @@
         android:id="@+id/error_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F2F4F7"
+        android:background="#F4FAF3"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="40dp"
