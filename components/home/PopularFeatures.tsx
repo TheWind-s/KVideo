@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { TagManager } from './TagManager';
 import { MovieGrid } from './MovieGrid';
+import { Icons } from '@/components/ui/Icon';
 import { useTagManager } from './hooks/useTagManager';
 import { usePopularMovies } from './hooks/usePopularMovies';
 import { usePersonalizedRecommendations } from './hooks/usePersonalizedRecommendations';
@@ -92,33 +93,40 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* Content Type Toggle (Capsule Liquid Glass - Fixed & Centered) */}
+      {/* Content Type Toggle + Tag Management (one compact row) */}
       {!isTagManagementMode && !effectiveRecommendSelected && (
-        <div className="mb-10 flex justify-center">
-          <div className="relative w-80 p-1 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-full grid grid-cols-2 backdrop-blur-2xl shadow-lg ring-1 ring-white/10 overflow-hidden">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="relative w-44 sm:w-52 p-0.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-full grid grid-cols-2 backdrop-blur-2xl shadow-sm ring-1 ring-white/10 overflow-hidden flex-shrink-0">
             {/* Sliding Indicator */}
             <div
-              className="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[var(--accent-color)] rounded-full transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1) shadow-[0_0_15px_rgba(0,122,255,0.4)]"
+              className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-[var(--accent-color)] rounded-full transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1) shadow-[0_0_12px_rgba(0,122,255,0.35)]"
               style={{
-                transform: `translateX(${contentType === 'movie' ? '4px' : 'calc(100% + 4px)'})`,
+                transform: `translateX(${contentType === 'movie' ? '2px' : 'calc(100% + 2px)'})`,
               }}
             />
 
             <button
               onClick={() => setContentType('movie')}
-              className={`relative z-10 py-2.5 text-sm font-bold transition-colors duration-300 cursor-pointer flex justify-center items-center ${contentType === 'movie' ? 'text-white' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'
+              className={`relative z-10 py-1.5 text-xs sm:text-[13px] font-bold transition-colors duration-300 cursor-pointer flex justify-center items-center ${contentType === 'movie' ? 'text-white' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'
                 }`}
             >
               电影
             </button>
             <button
               onClick={() => setContentType('tv')}
-              className={`relative z-10 py-2.5 text-sm font-bold transition-colors duration-300 cursor-pointer flex justify-center items-center ${contentType === 'tv' ? 'text-white' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'
+              className={`relative z-10 py-1.5 text-xs sm:text-[13px] font-bold transition-colors duration-300 cursor-pointer flex justify-center items-center ${contentType === 'tv' ? 'text-white' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'
                 }`}
             >
               电视剧
             </button>
           </div>
+          <button
+            onClick={() => setShowTagManager(!showTagManager)}
+            className="text-xs sm:text-sm text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+          >
+            <Icons.Tag size={14} />
+            管理标签
+          </button>
         </div>
       )}
 
@@ -128,6 +136,7 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
         showTagManager={showTagManager}
         newTagInput={newTagInput}
         justAddedTag={justAddedTag}
+        hideManagementRow={!isTagManagementMode && !effectiveRecommendSelected}
         onTagSelect={handleRegularTagSelect}
         onTagDelete={handleDeleteTag}
         onToggleManager={() => setShowTagManager(!showTagManager)}

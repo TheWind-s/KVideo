@@ -26,6 +26,8 @@ interface TagManagerProps {
   onJustAddedTagHandled: () => void;
   isLoadingTags?: boolean;
   recommendTag?: RecommendTagConfig;
+  /** When true, the "管理标签/完成/恢复默认" row is rendered elsewhere */
+  hideManagementRow?: boolean;
 }
 
 export function TagManager({
@@ -44,28 +46,31 @@ export function TagManager({
   onJustAddedTagHandled,
   isLoadingTags,
   recommendTag,
+  hideManagementRow = false,
 }: TagManagerProps) {
   return (
     <>
-      {/* Management Controls */}
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          onClick={onToggleManager}
-          className="text-sm text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] transition-colors flex items-center gap-2 cursor-pointer"
-        >
-          <Icons.Tag size={16} />
-          {showTagManager ? '完成' : '管理标签'}
-        </button>
-        {showTagManager && (
+      {/* Management Controls (only in tag-management mode) */}
+      {!hideManagementRow && (
+        <div className="mb-3 flex items-center justify-between">
           <button
-            onClick={onRestoreDefaults}
-            className="text-sm text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] transition-colors flex items-center gap-2 cursor-pointer"
+            onClick={onToggleManager}
+            className="text-xs sm:text-sm text-[var(--accent-color)] hover:opacity-80 transition-opacity flex items-center gap-1.5 cursor-pointer"
           >
-            <Icons.RefreshCw size={16} />
-            恢复默认
+            <Icons.Tag size={14} />
+            {showTagManager ? '完成' : '管理标签'}
           </button>
-        )}
-      </div>
+          {showTagManager && (
+            <button
+              onClick={onRestoreDefaults}
+              className="text-xs sm:text-sm text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Icons.RefreshCw size={14} />
+              恢复默认
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Add Custom Tag */}
       {showTagManager && (
