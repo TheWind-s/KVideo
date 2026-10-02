@@ -70,7 +70,7 @@ export function HeroCarousel() {
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-[var(--radius-2xl)] shadow-[0_8px_32px_var(--shadow-color)] group"
+      className="relative w-full overflow-hidden rounded-none sm:rounded-[var(--radius-2xl)] shadow-none sm:shadow-[0_8px_32px_var(--shadow-color)] group"
       /* 与素材同比例（16:9），随屏幕宽度等比缩放不裁切，保证二维码完整可见 */
       style={{ aspectRatio: '16 / 9' }}
       onMouseEnter={() => setIsPaused(true)}

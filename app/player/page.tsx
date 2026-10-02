@@ -53,8 +53,10 @@ function PlayerContent() {
     typeof window !== 'undefined' ? modeStore.getSettings().episodeReverseOrder : false
   );
 
-  // Mobile tab state
-  const [activeTab, setActiveTab] = useState<'episodes' | 'info'>('episodes');
+  // Mobile tab state（支持搜索列表"详情"按钮通过 ?tab=info 直达简介）
+  const [activeTab, setActiveTab] = useState<'episodes' | 'info'>(() =>
+    searchParams.get('tab') === 'info' ? 'info' : 'episodes'
+  );
   const [playerViewportMode, setPlayerViewportMode] = useState<PlayerViewportMode>(() => {
     if (typeof window === 'undefined') return 'standard';
     const saved = localStorage.getItem(PLAYER_VIEWPORT_MODE_KEY);

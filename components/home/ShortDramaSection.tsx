@@ -103,7 +103,7 @@ export function ShortDramaSection() {
     // 正在探测可用源
     if (sourcesLoading && sources.length === 0) {
         return (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center py-12 px-4">
                 <div className="flex flex-col items-center gap-3">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--accent-color)] border-t-transparent"></div>
                     <p className="text-sm text-[var(--text-color-secondary)]">正在发现短剧资源...</p>
@@ -115,7 +115,7 @@ export function ShortDramaSection() {
     // 没有任何源提供短剧
     if (sources.length === 0) {
         return (
-            <div className="text-center py-20">
+            <div className="text-center py-20 px-4">
                 <Icons.Film size={64} className="text-[var(--text-color-secondary)] mx-auto mb-4" />
                 <p className="text-[var(--text-color-secondary)]">当前启用的视频源均未提供短剧分类</p>
             </div>
@@ -126,8 +126,8 @@ export function ShortDramaSection() {
         <div className="animate-fade-in">
             {/* 视频源自动选择，不展示源切换行 */}
 
-            {/* 子分类标签行：无子分类时仅显示"全部" */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-5">
+            {/* 子分类标签行：无子分类时仅显示"全部"（手机端网格通屏，标签行保留内边距） */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-5 px-4 sm:px-0">
                 <button type="button" onClick={() => setTagId(ALL_TAG)} className={chipClass(tagId === ALL_TAG)}>
                     全部
                 </button>
@@ -145,14 +145,14 @@ export function ShortDramaSection() {
 
             {/* 列表区域 */}
             {loading && videos.length === 0 ? (
-                <div className="flex justify-center py-12">
+                <div className="flex justify-center py-12 px-4">
                     <div className="flex flex-col items-center gap-3">
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--accent-color)] border-t-transparent"></div>
                         <p className="text-sm text-[var(--text-color-secondary)]">正在加载短剧...</p>
                     </div>
                 </div>
             ) : videos.length === 0 ? (
-                <div className="text-center py-20">
+                <div className="text-center py-20 px-4">
                     <Icons.Film size={64} className="text-[var(--text-color-secondary)] mx-auto mb-4" />
                     <p className="text-[var(--text-color-secondary)]">该分类下暂无短剧</p>
                 </div>

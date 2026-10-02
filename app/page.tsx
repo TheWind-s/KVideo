@@ -56,9 +56,9 @@ function HomePage() {
       {/* 顶部广告条 —— 标题栏下方，文字超宽自动横向滚动 */}
       <NavAdBanner />
 
-      {/* Hero Banner - top of the page */}
+      {/* Hero Banner - top of the page（手机端左右无留白、通屏展示；桌面/TV 保持边距与圆角） */}
       {!hasSearched && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-6">
+        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 mt-2 sm:mt-4 mb-4 sm:mb-6">
           <HeroCarousel />
         </div>
       )}
@@ -83,14 +83,15 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      {/* Main Content（手机端封面网格通屏无左右边距；各区块内部自行保留需要的内边距） */}
+      <main className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 pb-20">
         {/* Results Section */}
         {(results.length >= 1 || (!loading && results.length > 0)) && (
           <SearchResults
             results={results}
             availableSources={availableSources}
             loading={loading}
+            query={query}
             latencies={latencies}
           />
         )}

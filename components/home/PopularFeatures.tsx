@@ -98,7 +98,9 @@ export function PopularFeatures({ onSearch, contentType, onContentTypeChange }: 
 
   return (
     <div className="animate-fade-in">
-      <TagManager
+      {/* 手机端主内容区无边距，标签行保留左右内边距 */}
+      <div className="px-4 sm:px-0">
+        <TagManager
         tags={tags}
         selectedTag={effectiveRecommendSelected ? '' : selectedTag}
         showTagManager={showTagManager}
@@ -118,7 +120,8 @@ export function PopularFeatures({ onSearch, contentType, onContentTypeChange }: 
           isSelected: effectiveRecommendSelected,
           onSelect: handleRecommendSelect,
         } : undefined}
-      />
+        />
+      </div>
 
       {!isTagManagementMode && (
         effectiveRecommendSelected ? (
