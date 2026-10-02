@@ -13,18 +13,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system');
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<Theme>('light');
+  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
   const transitionRef = React.useRef<any>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Load saved theme
-    const saved = localStorage.getItem('theme') as Theme;
-    if (saved) {
-      setTheme(saved);
-    }
+    // Theme switcher is hidden: force light for everyone and overwrite
+    // any previously saved dark/system preference.
+    setTheme('light');
   }, []);
 
   useEffect(() => {

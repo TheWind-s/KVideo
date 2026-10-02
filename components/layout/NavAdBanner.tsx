@@ -47,9 +47,9 @@ export function NavAdBanner() {
   const current = ADS[index];
 
   return (
-    <div className="flex-1 hidden sm:flex justify-center">
+    <div className="flex-1 min-w-0 flex justify-start ml-1 sm:ml-3">
       <div
-        className="relative w-full max-w-[520px]"
+        className="relative w-full min-w-0"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >

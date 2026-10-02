@@ -45,19 +45,18 @@ class MainActivity : ComponentActivity() {
         // Fixed server endpoint; users cannot change it in the app.
         private const val DEFAULT_SERVER_URL = "https://kvideo-d38.pages.dev"
 
-        // Applied at the very start of every navigation: forces the dark theme
-        // and paints a dark base frame, eliminating the white FOUC the site shows
-        // before React hydrates and adds the .dark class.
+        // Applied at the very start of every navigation: forces the light theme
+        // and paints a light base frame, eliminating the FOUC the site shows
+        // before React hydrates.
         private const val ANTI_FLASH_JS = """
             (function () {
-              try { localStorage.setItem('theme', 'dark'); } catch (e) {}
-              document.documentElement.classList.add('dark');
+              try { localStorage.setItem('theme', 'light'); } catch (e) {}
+              document.documentElement.classList.remove('dark');
               if (!document.getElementById('__kv_antiflash')) {
                 var s = document.createElement('style');
                 s.id = '__kv_antiflash';
-                s.textContent = 'html,body{background-color:#121212!important;' +
-                  'background-image:linear-gradient(120deg,#1a1a1a 0%,#121212 100%)!important;' +
-                  'color-scheme:dark;}';
+                s.textContent = 'html,body{background-color:#f2f4f7!important;' +
+                  'color-scheme:light;}';
                 (document.head || document.documentElement).appendChild(s);
               }
             })();
@@ -145,7 +144,7 @@ class MainActivity : ComponentActivity() {
             // NOTE: no setLayerType(HARDWARE) here. Forcing a hardware layer on the
             // whole WebView causes a white compositing flash during back/forward
             // navigation. WebView is already hardware accelerated by the manifest.
-            setBackgroundColor(android.graphics.Color.BLACK)
+            setBackgroundColor(android.graphics.Color.parseColor("#F2F4F7"))
 
             settings.apply {
                 javaScriptEnabled = true

@@ -2,13 +2,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#F2F4F7">
 
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000" />
+        android:background="#F2F4F7" />
 
     <ScrollView
         android:id="@+id/setup_container"
@@ -114,13 +114,13 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Black mask shown briefly during back navigation to cover the
-         WebView bfcache restore white flash -->
+    <!-- Light mask shown briefly during back navigation to cover the
+         WebView bfcache restore flash -->
     <View
         android:id="@+id/back_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000"
+        android:background="#F2F4F7"
         android:visibility="gone" />
 
     <!-- Network / load error overlay -->
@@ -128,7 +128,7 @@
         android:id="@+id/error_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#0D0F14"
+        android:background="#F2F4F7"
         android:gravity="center"
         android:orientation="vertical"
         android:padding="40dp"
@@ -138,7 +138,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="无法连接服务器"
-            android:textColor="#FFFFFF"
+            android:textColor="#1A1D26"
             android:textSize="26sp"
             android:textStyle="bold" />
 
@@ -149,7 +149,7 @@
             android:layout_marginTop="14dp"
             android:gravity="center"
             android:text="请检查网络连接后重试"
-            android:textColor="#9EA7BA"
+            android:textColor="#5A6472"
             android:textSize="16sp" />
 
         <Button
