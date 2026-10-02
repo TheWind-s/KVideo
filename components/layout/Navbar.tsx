@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { NavAdBanner } from '@/components/layout/NavAdBanner';
 import { useSiteIcon } from '@/components/SiteIconProvider';
 import { Icons } from '@/components/ui/Icon';
