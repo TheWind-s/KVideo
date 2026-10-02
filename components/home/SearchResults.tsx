@@ -1,8 +1,6 @@
 
 import { ResultsHeader } from '@/components/search/ResultsHeader';
-import { SourceBadges } from '@/components/search/SourceBadges';
 import { TypeBadges } from '@/components/search/TypeBadges';
-import { LanguageBadges } from '@/components/search/LanguageBadges';
 import { VideoGrid } from '@/components/search/VideoGrid';
 import { useSourceBadges } from '@/lib/hooks/useSourceBadges';
 import { useTypeBadges } from '@/lib/hooks/useTypeBadges';
@@ -24,11 +22,9 @@ export function SearchResults({
     isPremium = false,
     latencies = {},
 }: SearchResultsProps) {
-    // Source badges hook - filters by video source
+    // Source filter chain retained (no source badges shown, so nothing is filtered)
     const {
-        selectedSources,
         filteredVideos: sourceFilteredVideos,
-        toggleSource,
     } = useSourceBadges(results, availableSources);
 
     // Type badges hook - auto-collects and filters by type_name
@@ -40,13 +36,9 @@ export function SearchResults({
         toggleType,
     } = useTypeBadges(sourceFilteredVideos);
 
-    // Language badges hook - auto-collects and filters by vod_lang
-    // Apply on type-filtered results for combined filtering
+    // Language filter chain retained (no language badges shown, so nothing is filtered)
     const {
-        languageBadges,
-        selectedLangs,
         filteredVideos: finalFilteredVideos,
-        toggleLang,
     } = useLanguageBadges(typeFilteredVideos);
 
     if (results.length === 0 && !loading) return null;
@@ -59,15 +51,7 @@ export function SearchResults({
                 availableSources={availableSources}
             />
 
-            {/* Source Badges - Clickable video source filtering */}
-            {availableSources.length > 0 && (
-                <SourceBadges
-                    sources={availableSources}
-                    selectedSources={selectedSources}
-                    onToggleSource={toggleSource}
-                    className="mb-6"
-                />
-            )}
+            {/* 视频源筛选栏已隐藏 */}
 
             {/* Type Badges - Auto-collected from search results */}
             {typeBadges.length > 0 && (
@@ -79,17 +63,9 @@ export function SearchResults({
                 />
             )}
 
-            {/* Language Badges - Auto-collected from search results */}
-            {languageBadges.length > 0 && (
-                <LanguageBadges
-                    badges={languageBadges}
-                    selectedLangs={selectedLangs}
-                    onToggleLang={toggleLang}
-                    className="mb-6"
-                />
-            )}
+            {/* 语言标签筛选栏已隐藏 */}
 
-            {/* Display filtered videos (source, type, and language filters applied) */}
+            {/* Display filtered videos (type filter applied) */}
             <VideoGrid
                 videos={finalFilteredVideos}
                 isPremium={isPremium}
