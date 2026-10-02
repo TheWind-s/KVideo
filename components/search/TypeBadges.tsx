@@ -39,8 +39,8 @@ export const TypeBadges = memo(function TypeBadges({
       hover={false}
       className={`p-4 animate-fade-in bg-[var(--bg-color)]/50 backdrop-blur-none saturate-100 shadow-sm border-[var(--glass-border)] ${className}`}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex items-center gap-2 shrink-0 pt-1">
+      <div className="flex items-center md:items-start gap-3">
+        <div className="flex items-center gap-2 shrink-0 md:pt-1">
           <Icons.Tag size={16} className="text-[var(--accent-color)]" />
           <span className="text-sm font-semibold text-[var(--text-color)]">
             分类标签 ({badges.length}):

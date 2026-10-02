@@ -138,7 +138,7 @@ export function TypeBadgeList({ badges, selectedTypes, onToggleType }: TypeBadge
       >
         <div
           ref={containerRef}
-          className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory"
+          className="flex items-center gap-2 overflow-x-auto py-0.5 scrollbar-hide snap-x snap-mandatory"
         >
           {badges.map((badge, index) => (
             <TypeBadgeItem
