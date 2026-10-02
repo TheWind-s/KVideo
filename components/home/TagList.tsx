@@ -37,6 +37,8 @@ interface TagListProps {
     onDragEnd: (event: DragEndEvent) => void;
     onJustAddedTagHandled: () => void;
     recommendTag?: RecommendTagConfig;
+    onToggleManager: () => void;
+    onRestoreDefaults: () => void;
 }
 
 export function TagList({
@@ -49,6 +51,8 @@ export function TagList({
     onDragEnd,
     onJustAddedTagHandled,
     recommendTag,
+    onToggleManager,
+    onRestoreDefaults,
 }: TagListProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -116,7 +120,7 @@ export function TagList({
         >
             <div
                 ref={scrollContainerRef}
-                className={`mb-8 flex items-center gap-3 pb-3 pt-2 px-1 scrollbar-hide ${
+                className={`mb-6 flex items-center gap-2 pb-2 pt-1 px-1 scrollbar-hide ${
                     showTagManager
                         ? 'flex-wrap overflow-visible'
                         : 'overflow-x-auto'
@@ -129,14 +133,14 @@ export function TagList({
                             type="button"
                             onClick={recommendTag.onSelect}
                             className={`
-                                px-6 py-2.5 text-sm font-semibold transition-all whitespace-nowrap rounded-[var(--radius-full)] cursor-pointer select-none flex items-center gap-1.5
+                                px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-[13px] font-semibold transition-all whitespace-nowrap rounded-[var(--radius-full)] cursor-pointer select-none flex items-center gap-1
                                 ${recommendTag.isSelected
                                     ? 'bg-[var(--accent-color)] text-white shadow-md scale-105'
                                     : 'bg-[var(--glass-bg)] backdrop-blur-xl text-[var(--text-color)] border border-[var(--glass-border)] hover:border-[var(--accent-color)] hover:scale-105'
                                 }
                             `}
                         >
-                            <Icons.Sparkles size={14} />
+                            <Icons.Sparkles size={12} />
                             {recommendTag.label}
                         </button>
                     </div>
@@ -156,12 +160,43 @@ export function TagList({
                         />
                     ))}
                 </SortableContext>
+
+                {/* Divider + inline tag management actions */}
+                <div className="w-px h-4 bg-[var(--glass-border)] flex-shrink-0 mx-1" />
+                {showTagManager ? (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            type="button"
+                            onClick={onRestoreDefaults}
+                            className="px-3 py-1.5 text-xs font-medium whitespace-nowrap rounded-[var(--radius-full)] text-[var(--text-color-secondary)] border border-[var(--glass-border)] hover:text-[var(--accent-color)] hover:border-[var(--accent-color)] transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                            <Icons.RefreshCw size={12} />
+                            恢复默认
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onToggleManager}
+                            className="px-3 py-1.5 text-xs font-semibold whitespace-nowrap rounded-[var(--radius-full)] bg-[var(--accent-color)] text-white hover:opacity-90 transition-opacity cursor-pointer"
+                        >
+                            完成
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={onToggleManager}
+                        className="px-3 py-1.5 text-xs font-medium whitespace-nowrap rounded-[var(--radius-full)] text-[var(--text-color-secondary)] border border-[var(--glass-border)] hover:text-[var(--accent-color)] hover:border-[var(--accent-color)] transition-colors cursor-pointer flex items-center gap-1 flex-shrink-0"
+                    >
+                        <Icons.Tag size={12} />
+                        管理
+                    </button>
+                )}
             </div>
 
             <DragOverlay>
                 {activeId && activeTag ? (
                     <div className="relative flex-shrink-0 animate-jiggle">
-                        <button className="px-6 py-2.5 text-sm font-semibold whitespace-nowrap rounded-[var(--radius-full)] bg-[var(--accent-color)] text-white shadow-xl scale-110 cursor-grabbing border border-transparent">
+                        <button className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-[13px] font-semibold whitespace-nowrap rounded-[var(--radius-full)] bg-[var(--accent-color)] text-white shadow-xl scale-110 cursor-grabbing border border-transparent">
                             {activeTag.label}
                         </button>
                     </div>

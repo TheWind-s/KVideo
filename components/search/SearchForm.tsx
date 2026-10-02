@@ -14,6 +14,8 @@ interface SearchFormProps {
   totalSources?: number;
   placeholder?: string;
   isPremium?: boolean;
+  /** Stretch to fill a flex row (used with a sibling control) */
+  inline?: boolean;
 }
 
 export function SearchForm({
@@ -27,9 +29,10 @@ export function SearchForm({
   totalSources = 16,
   placeholder,
   isPremium = false,
+  inline = false,
 }: SearchFormProps) {
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className={inline ? 'flex-1 min-w-0' : 'max-w-3xl mx-auto w-full'}>
       <SearchBox
         onSearch={onSearch}
         onClear={onClear}

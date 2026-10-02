@@ -12,7 +12,7 @@ export function TagInput({
     onAddTag,
 }: TagInputProps) {
     return (
-        <div className="mb-6 flex gap-2 flex-wrap">
+        <div className="mb-3 flex gap-2 flex-wrap">
             <input
                 type="text"
                 value={newTagInput}

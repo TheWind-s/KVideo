@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { SearchForm } from '@/components/search/SearchForm';
 import { NoResults } from '@/components/search/NoResults';
 import { PopularFeatures } from '@/components/home/PopularFeatures';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
+import { ContentTypeToggle, type ContentType } from '@/components/home/ContentTypeToggle';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { Navbar } from '@/components/layout/Navbar';
 import { SearchResults } from '@/components/home/SearchResults';
@@ -25,6 +26,12 @@ function HomePage() {
     handleCancelSearch,
   } = useHomePage();
 
+  // Movie / TV selector — lifted here so it can share the search row
+  const [contentType, setContentType] = useState<ContentType>(() => {
+    if (typeof window === 'undefined') return 'movie';
+    return localStorage.getItem('kvideo_default_content_type') === 'tv' ? 'tv' : 'movie';
+  });
+
   // Real-time latency pinging
   const sourceUrls = useMemo(() =>
     availableSources.flatMap((source) =>
@@ -43,29 +50,30 @@ function HomePage() {
       {/* Glass Navbar */}
       <Navbar onReset={handleReset} />
 
-      {/* Search Form - Separate from navbar */}
-      <div className="max-w-7xl mx-auto px-4 mt-6 mb-8 relative" style={{
-        transform: 'translate3d(0, 0, 0)',
-        zIndex: 1000
-      }}>
-        <SearchForm
-          onSearch={handleSearch}
-          onClear={handleReset}
-          onCancelSearch={handleCancelSearch}
-          isLoading={loading}
-          initialQuery={query}
-          currentSource=""
-          checkedSources={completedSources}
-          totalSources={totalSources}
-        />
-      </div>
-
-      {/* Hero Carousel - Only show on homepage (no search) */}
+      {/* Hero Banner - top of the page */}
       {!hasSearched && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 mb-6">
           <HeroCarousel />
         </div>
       )}
+
+      {/* Search Form + Movie/TV Toggle - same row */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <SearchForm
+            inline
+            onSearch={handleSearch}
+            onClear={handleReset}
+            onCancelSearch={handleCancelSearch}
+            isLoading={loading}
+            initialQuery={query}
+            currentSource=""
+            checkedSources={completedSources}
+            totalSources={totalSources}
+          />
+          <ContentTypeToggle value={contentType} onChange={setContentType} />
+        </div>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
@@ -82,7 +90,11 @@ function HomePage() {
         {/* Popular Features - Homepage */}
         {!loading && !hasSearched && (
           <>
-            <PopularFeatures onSearch={handleSearch} />
+            <PopularFeatures
+              onSearch={handleSearch}
+              contentType={contentType}
+              onContentTypeChange={setContentType}
+            />
           </>
         )}
 

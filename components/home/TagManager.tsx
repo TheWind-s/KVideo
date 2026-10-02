@@ -26,8 +26,6 @@ interface TagManagerProps {
   onJustAddedTagHandled: () => void;
   isLoadingTags?: boolean;
   recommendTag?: RecommendTagConfig;
-  /** When true, the "管理标签/完成/恢复默认" row is rendered elsewhere */
-  hideManagementRow?: boolean;
 }
 
 export function TagManager({
@@ -46,32 +44,9 @@ export function TagManager({
   onJustAddedTagHandled,
   isLoadingTags,
   recommendTag,
-  hideManagementRow = false,
 }: TagManagerProps) {
   return (
     <>
-      {/* Management Controls (only in tag-management mode) */}
-      {!hideManagementRow && (
-        <div className="mb-3 flex items-center justify-between">
-          <button
-            onClick={onToggleManager}
-            className="text-xs sm:text-sm text-[var(--accent-color)] hover:opacity-80 transition-opacity flex items-center gap-1.5 cursor-pointer"
-          >
-            <Icons.Tag size={14} />
-            {showTagManager ? '完成' : '管理标签'}
-          </button>
-          {showTagManager && (
-            <button
-              onClick={onRestoreDefaults}
-              className="text-xs sm:text-sm text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Icons.RefreshCw size={14} />
-              恢复默认
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Add Custom Tag */}
       {showTagManager && (
         <TagInput
@@ -81,11 +56,11 @@ export function TagManager({
         />
       )}
 
-      {/* Tag Filter */}
+      {/* Tag Filter with inline 管理标签 action */}
       {isLoadingTags ? (
-        <div className="flex items-center gap-2 py-4">
-          <Icons.RefreshCw size={16} className="animate-spin text-[var(--accent-color)]" />
-          <span className="text-sm text-[var(--text-color-secondary)]">正在加载标签...</span>
+        <div className="flex items-center gap-2 py-3">
+          <Icons.RefreshCw size={14} className="animate-spin text-[var(--accent-color)]" />
+          <span className="text-xs text-[var(--text-color-secondary)]">正在加载标签...</span>
         </div>
       ) : (
         <TagList
@@ -98,6 +73,8 @@ export function TagManager({
           onDragEnd={onDragEnd}
           onJustAddedTagHandled={onJustAddedTagHandled}
           recommendTag={recommendTag}
+          onToggleManager={onToggleManager}
+          onRestoreDefaults={onRestoreDefaults}
         />
       )}
     </>

@@ -54,7 +54,7 @@ export function SortableTag({
                     type="button"
                     onClick={() => onTagSelect(tag.id)}
                     className={`
-            px-6 py-2.5 text-sm font-semibold transition-all whitespace-nowrap rounded-[var(--radius-full)] cursor-pointer select-none
+            px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-[13px] font-semibold transition-all whitespace-nowrap rounded-[var(--radius-full)] cursor-pointer select-none
             ${selectedTag === tag.id
                             ? 'bg-[var(--accent-color)] text-white shadow-md scale-105'
                             : 'bg-[var(--glass-bg)] backdrop-blur-xl text-[var(--text-color)] border border-[var(--glass-border)] hover:border-[var(--accent-color)] hover:scale-105'
@@ -70,9 +70,9 @@ export function SortableTag({
                             e.stopPropagation();
                             onTagDelete(tag.id);
                         }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors rounded-[var(--radius-full)] cursor-pointer z-20 shadow-sm"
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors rounded-[var(--radius-full)] cursor-pointer z-20 shadow-sm"
                     >
-                        <Icons.X size={14} />
+                        <Icons.X size={12} />
                     </button>
                 )}
             </div>

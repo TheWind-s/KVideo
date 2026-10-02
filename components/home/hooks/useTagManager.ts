@@ -19,12 +19,19 @@ const ensureDefaultTag = (tags: Tag[]) => {
     return [DEFAULT_TAG, ...tags];
 };
 
-export function useTagManager() {
-    const [contentType, setContentType] = useState<'movie' | 'tv'>(() => {
+interface ControlledContentType {
+    contentType: 'movie' | 'tv';
+    setContentType: (value: 'movie' | 'tv') => void;
+}
+
+export function useTagManager(controlled?: ControlledContentType) {
+    const [internalContentType, setInternalContentType] = useState<'movie' | 'tv'>(() => {
         if (typeof window === 'undefined') return 'movie';
         const saved = localStorage.getItem('kvideo_default_content_type');
         return saved === 'tv' ? 'tv' : 'movie';
     });
+    const contentType = controlled ? controlled.contentType : internalContentType;
+    const setContentType = controlled ? controlled.setContentType : setInternalContentType;
     const [selectedTag, setSelectedTag] = useState(DEFAULT_TAG.id);
     const [tags, setTags] = useState<Tag[]>([]);
     const [isLoadingTags, setIsLoadingTags] = useState(false);

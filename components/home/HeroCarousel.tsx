@@ -71,7 +71,7 @@ export function HeroCarousel() {
   return (
     <div
       className="relative w-full overflow-hidden rounded-[var(--radius-2xl)] shadow-[0_8px_32px_var(--shadow-color)] group"
-      style={{ aspectRatio: '32 / 9' }}
+      style={{ aspectRatio: '21 / 9' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       data-focusable

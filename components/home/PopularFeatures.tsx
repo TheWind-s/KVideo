@@ -6,13 +6,13 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TagManager } from './TagManager';
 import { MovieGrid } from './MovieGrid';
-import { Icons } from '@/components/ui/Icon';
 import { useTagManager } from './hooks/useTagManager';
 import { usePopularMovies } from './hooks/usePopularMovies';
 import { usePersonalizedRecommendations } from './hooks/usePersonalizedRecommendations';
+import type { ContentType } from './ContentTypeToggle';
 
 interface DoubanMovie {
   id: string;
@@ -24,17 +24,17 @@ interface DoubanMovie {
 
 interface PopularFeaturesProps {
   onSearch?: (query: string) => void;
+  contentType: ContentType;
+  onContentTypeChange: (value: ContentType) => void;
 }
 
-export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
+export function PopularFeatures({ onSearch, contentType, onContentTypeChange }: PopularFeaturesProps) {
   const {
     tags,
     selectedTag,
-    contentType,
     newTagInput,
     showTagManager,
     justAddedTag,
-    setContentType,
     setSelectedTag,
     setNewTagInput,
     setShowTagManager,
@@ -44,7 +44,7 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
     handleRestoreDefaults,
     handleDragEnd,
     isLoadingTags,
-  } = useTagManager();
+  } = useTagManager({ contentType, setContentType: onContentTypeChange });
 
   const {
     movies: recommendMovies,
@@ -56,6 +56,11 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
   } = usePersonalizedRecommendations(false);
 
   const [isRecommendSelected, setIsRecommendSelected] = useState(false);
+
+  // Leaving "for you" mode whenever the movie/TV type changes
+  useEffect(() => {
+    setIsRecommendSelected(false);
+  }, [contentType]);
 
   const effectiveRecommendSelected = hasHistory && isRecommendSelected;
   const isTagManagementMode = showTagManager;
@@ -93,50 +98,12 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* Content Type Toggle + Tag Management (one compact row) */}
-      {!isTagManagementMode && !effectiveRecommendSelected && (
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="relative w-44 sm:w-52 p-0.5 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-full grid grid-cols-2 backdrop-blur-2xl shadow-sm ring-1 ring-white/10 overflow-hidden flex-shrink-0">
-            {/* Sliding Indicator */}
-            <div
-              className="absolute top-0.5 bottom-0.5 w-[calc(50%-2px)] bg-[var(--accent-color)] rounded-full transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1) shadow-[0_0_12px_rgba(0,122,255,0.35)]"
-              style={{
-                transform: `translateX(${contentType === 'movie' ? '2px' : 'calc(100% + 2px)'})`,
-              }}
-            />
-
-            <button
-              onClick={() => setContentType('movie')}
-              className={`relative z-10 py-1.5 text-xs sm:text-[13px] font-bold transition-colors duration-300 cursor-pointer flex justify-center items-center ${contentType === 'movie' ? 'text-white' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'
-                }`}
-            >
-              电影
-            </button>
-            <button
-              onClick={() => setContentType('tv')}
-              className={`relative z-10 py-1.5 text-xs sm:text-[13px] font-bold transition-colors duration-300 cursor-pointer flex justify-center items-center ${contentType === 'tv' ? 'text-white' : 'text-[var(--text-color-secondary)] hover:text-[var(--text-color)]'
-                }`}
-            >
-              电视剧
-            </button>
-          </div>
-          <button
-            onClick={() => setShowTagManager(!showTagManager)}
-            className="text-xs sm:text-sm text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] transition-colors flex items-center gap-1.5 cursor-pointer flex-shrink-0"
-          >
-            <Icons.Tag size={14} />
-            管理标签
-          </button>
-        </div>
-      )}
-
       <TagManager
         tags={tags}
         selectedTag={effectiveRecommendSelected ? '' : selectedTag}
         showTagManager={showTagManager}
         newTagInput={newTagInput}
         justAddedTag={justAddedTag}
-        hideManagementRow={!isTagManagementMode && !effectiveRecommendSelected}
         onTagSelect={handleRegularTagSelect}
         onTagDelete={handleDeleteTag}
         onToggleManager={() => setShowTagManager(!showTagManager)}
