@@ -60,6 +60,7 @@ function HomePage() {
       {/* Search Form + Movie/TV Toggle - same row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
         <div className="flex items-center gap-2 sm:gap-4">
+          <ContentTypeToggle value={contentType} onChange={setContentType} />
           <SearchForm
             inline
             onSearch={handleSearch}
@@ -71,7 +72,6 @@ function HomePage() {
             checkedSources={completedSources}
             totalSources={totalSources}
           />
-          <ContentTypeToggle value={contentType} onChange={setContentType} />
         </div>
       </div>
 
