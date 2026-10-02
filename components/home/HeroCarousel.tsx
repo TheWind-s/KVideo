@@ -13,13 +13,13 @@ interface CarouselSlide {
 const SLIDES: CarouselSlide[] = [
   {
     id: 1,
-    src: '/carousel-1.png',
-    alt: '影视平台宣传',
+    src: '/images/banner-promo-1.jpg',
+    alt: '淘宝京东官方优惠券分享群',
   },
   {
     id: 2,
-    src: '/carousel-2.png',
-    alt: '家庭影院体验',
+    src: '/images/banner-promo-2.jpg',
+    alt: '领取优惠券，一起省钱',
   },
 ];
 
@@ -71,7 +71,8 @@ export function HeroCarousel() {
   return (
     <div
       className="relative w-full overflow-hidden rounded-[var(--radius-2xl)] shadow-[0_8px_32px_var(--shadow-color)] group"
-      style={{ aspectRatio: '21 / 9' }}
+      /* 与素材同比例（16:9），随屏幕宽度等比缩放不裁切，保证二维码完整可见 */
+      style={{ aspectRatio: '16 / 9' }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       data-focusable
@@ -95,8 +96,7 @@ export function HeroCarousel() {
               className="object-cover"
               priority={index === 0}
             />
-            {/* Gradient overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            {/* 推广图自带文案与二维码，不加渐变遮罩避免遮挡 */}
           </div>
         ))}
       </div>
