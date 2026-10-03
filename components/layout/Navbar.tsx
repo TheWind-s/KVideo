@@ -8,6 +8,7 @@ import { Icons } from '@/components/ui/Icon';
 import { siteConfig } from '@/lib/config/site-config';
 import { getSession, clearSession, hasPermission, type AuthSession } from '@/lib/store/auth-store';
 import { useRuntimeFeatures } from '@/components/RuntimeFeaturesProvider';
+import { ApkDownloadButton } from '@/components/layout/ApkDownloadButton';
 import { LogOut } from 'lucide-react';
 
 interface NavbarProps {
@@ -68,6 +69,9 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                         {/* 顶部广告条已移至标题栏下方（page.tsx） */}
 
                         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                            {/* APK 下载 / 更新入口（浏览器显示下载，App 内检测新版显示更新） */}
+                            <ApkDownloadButton />
+
                             {/* IPTV Link - only show if user has iptv_access or no auth configured */}
                             {iptvEnabled && hasPermission('iptv_access') && (
                             <Link

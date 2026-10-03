@@ -63,8 +63,10 @@ function HomePage() {
         </div>
       )}
 
-      {/* Search Form + Movie/TV Toggle - same row（搜索后折叠类型切换器，搜索栏独占整行） */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8">
+      {/* Search Form + Movie/TV Toggle - same row（搜索后折叠类型切换器，搜索栏独占整行）
+          relative z-30：搜索历史下拉层需要浮在结果/封面网格之上；
+          搜索后顶部广告条与搜索框之间补间距（此时轮播已隐藏）。 */}
+      <div className={`relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8 ${hasSearched ? 'mt-3 sm:mt-4' : ''}`}>
         <div className="flex items-center gap-2 sm:gap-4">
           {!hasSearched && (
             <ContentTypeToggle value={contentType} onChange={setContentType} />
