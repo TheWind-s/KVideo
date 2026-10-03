@@ -38,10 +38,17 @@ declare global {
 
 type UpdateState = 'browser' | 'checking' | 'latest' | 'update';
 
+/** Android WebView 的 UA 带有 "; wv)" 标记；旧版 App 壳无 JS 桥也无下载监听，点下载链接会被静默吞掉 */
+function isBridgelessWebView(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /; wv\)/.test(navigator.userAgent) && typeof window.KVideoAndroid?.downloadUpdate !== 'function';
+}
+
 export function ApkDownloadButton() {
   const [manifest, setManifest] = useState<ApkReleaseManifest | null>(null);
   const [state, setState] = useState<UpdateState>('checking');
   const [downloading, setDownloading] = useState(false);
+  const [legacyHint, setLegacyHint] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,19 +91,32 @@ export function ApkDownloadButton() {
     : `${window.location.origin}/apk/kvideo-latest.apk`;
   const notesText = manifest?.notes?.length ? `\n\n${manifest.notes.map((n) => `· ${n}`).join('\n')}` : '';
 
-  // 浏览器：普通下载链接
+  // 浏览器：普通下载链接；旧版 App 壳（无桥 WebView）则提示改用系统浏览器下载
   if (state === 'browser') {
     return (
-      <a
-        href={apkUrl}
-        download
-        title="下载洋芋影视 Android 安装包"
-        data-focusable
-        className="inline-flex h-8 sm:h-10 items-center justify-center gap-1.5 px-2.5 sm:px-4 rounded-[var(--radius-full)] border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-color)] text-xs sm:text-sm font-medium hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] hover:border-[color-mix(in_srgb,var(--accent-color)_40%,var(--glass-border))] transition-all duration-200 cursor-pointer whitespace-nowrap"
-      >
-        <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
-        <span>下载APP</span>
-      </a>
+      <span className="relative inline-flex">
+        <a
+          href={apkUrl}
+          download
+          title="下载洋芋影视 Android 安装包"
+          data-focusable
+          onClick={(e) => {
+            if (!isBridgelessWebView()) return;
+            e.preventDefault();
+            setLegacyHint(true);
+            setTimeout(() => setLegacyHint(false), 6000);
+          }}
+          className="inline-flex h-8 sm:h-10 items-center justify-center gap-1.5 px-2.5 sm:px-4 rounded-[var(--radius-full)] border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-color)] text-xs sm:text-sm font-medium hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] hover:border-[color-mix(in_srgb,var(--accent-color)_40%,var(--glass-border))] transition-all duration-200 cursor-pointer whitespace-nowrap"
+        >
+          <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
+          <span>下载APP</span>
+        </a>
+        {legacyHint && (
+          <span className="absolute top-full right-0 mt-2 w-56 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-[var(--shadow-md)] text-xs leading-5 text-[var(--text-color)] z-[3000]">
+            当前 App 版本过旧，无法直接下载。请用手机浏览器打开本站，点「下载APP」安装新版；之后就能在 App 内一键更新。
+          </span>
+        )}
+      </span>
     );
   }
 
