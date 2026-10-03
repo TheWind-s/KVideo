@@ -32,6 +32,7 @@ import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -122,23 +123,31 @@ class MainActivity : ComponentActivity() {
 
         val skip = dialog.findViewById<TextView>(R.id.splash_ad_skip)
         val version = dialog.findViewById<TextView>(R.id.splash_ad_version)
+        val adImage = dialog.findViewById<ImageView>(R.id.splash_ad_image)
         version.text = "v${BuildConfig.VERSION_NAME}"
-
-        splashAdCountDown?.cancel()
-        splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                val remain = ((millisUntilFinished + 999) / 1000L).toInt()
-                skip.text = "跳过 ${remain}s"
-            }
-
-            override fun onFinish() {
-                hideSplashAd()
-            }
-        }.start()
 
         skip.setOnClickListener { hideSplashAd() }
         splashDialog = dialog
         dialog.show()
+
+        // 倒计时从广告图真正绘制的第一帧才开始计：
+        // 图片解码需要时间，若在 show() 时就启动 5s 计时，
+        // 高分辨率图解码期间倒计时已流失，用户只能看到广告最后一两秒
+        splashAdCountDown?.cancel()
+        adImage.post {
+            // post 回调执行时对话框可能已被关闭
+            if (splashDialog !== dialog) return@post
+            splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
+                override fun onTick(millisUntilFinished: Long) {
+                    val remain = ((millisUntilFinished + 999) / 1000L).toInt()
+                    skip.text = "跳过 ${remain}s"
+                }
+
+                override fun onFinish() {
+                    hideSplashAd()
+                }
+            }.start()
+        }
     }
 
     private fun hideSplashAd() {
