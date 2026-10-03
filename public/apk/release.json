@@ -1,7 +1,7 @@
 {
   "versionName": "1.0.8",
   "versionCode": 9,
-  "url": "/apk/kvideo-1.0.8.apk",
+  "url": "/api/apk/download?v=1.0.8",
   "publishedAt": "2026-10-03",
   "notes": [
     "修复开屏广告只显示一两秒的问题：广告图解码优化，倒计时从图片真正显示才开始计",

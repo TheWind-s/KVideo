@@ -8,3 +8,15 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 # Environment variables can be set here or in Cloudflare Dashboard
+# STATS_KEY = "统计页访问密钥（建议在 Cloudflare 后台设置）"
+
+# 访问量 / APK 下载量统计所用的 KV 命名空间：
+# 1) Cloudflare → Workers & Pages → KV → 创建命名空间（如 kvideo-stats）
+# 2) 本地用 wrangler pages dev 调试时，把下面两行注释打开并填入真实 id
+# [[kv_namespaces]]
+# binding = "KV_STATS"
+# id = "在 KV 面板创建后把命名空间 ID 填到这里"
+#
+# Pages 线上部署（Git 自动构建）需在后台绑定：
+# Pages 项目 → Settings → Functions → KV namespace bindings
+#   变量名 KV_STATS → 选择 kvideo-stats（Production / Preview 都要绑）

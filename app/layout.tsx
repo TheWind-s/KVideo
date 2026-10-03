@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { PasswordGate } from "@/components/PasswordGate";
 import { ForceUpdateGate } from "@/components/ForceUpdateGate";
+import { StatsBeacon } from "@/components/StatsBeacon";
 import { siteConfig } from "@/lib/config/site-config";
 import { AdKeywordsInjector } from "@/components/AdKeywordsInjector";
 import { BackToTop } from "@/components/ui/BackToTop";
@@ -131,6 +132,7 @@ export default async function RootLayout({
                 <PasswordGate hasAuth={false}>
                   <AutoSync />
                   <ForceUpdateGate />
+                  <StatsBeacon />
                   <AdKeywordsWrapper />
                   {children}
                   <BackToTop />
