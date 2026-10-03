@@ -109,8 +109,9 @@ class MainActivity : ComponentActivity() {
     private fun showSplashAd() {
         splashAdContainer.alpha = 1f
         splashAdContainer.visibility = View.VISIBLE
-        // WebView 是硬件加速 Surface，会覆盖同层级普通 View；必须把广告层
-        // 提到最前并设高 elevation，否则广告一闪就被 WebView 白底盖住
+        // WebView 是独立合成层，部分机型上会盖住普通 View 造成广告"一闪而过"；
+        // 广告期间直接隐藏 WebView，广告层之上不可能有任何东西，也无法出现白屏
+        webView.visibility = View.INVISIBLE
         splashAdContainer.bringToFront()
         splashAdContainer.elevation = 1000f
 
@@ -139,6 +140,10 @@ class MainActivity : ComponentActivity() {
                 .withEndAction {
                     splashAdContainer.visibility = View.GONE
                     splashAdContainer.alpha = 1f
+                    // 广告结束再亮出 WebView（加载错误页时不恢复，交给错误 UI 接管）
+                    if (errorContainer.visibility != View.VISIBLE) {
+                        webView.visibility = View.VISIBLE
+                    }
                 }
         }
     }

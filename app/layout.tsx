@@ -9,6 +9,7 @@ import { TVNavigationInitializer } from "@/components/TVNavigationInitializer";
 import { Analytics } from "@vercel/analytics/react";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { PasswordGate } from "@/components/PasswordGate";
+import { ForceUpdateGate } from "@/components/ForceUpdateGate";
 import { siteConfig } from "@/lib/config/site-config";
 import { AdKeywordsInjector } from "@/components/AdKeywordsInjector";
 import { BackToTop } from "@/components/ui/BackToTop";
@@ -129,6 +130,7 @@ export default async function RootLayout({
                 {/* Access password hard-disabled: gate always stays unlocked. */}
                 <PasswordGate hasAuth={false}>
                   <AutoSync />
+                  <ForceUpdateGate />
                   <AdKeywordsWrapper />
                   {children}
                   <BackToTop />

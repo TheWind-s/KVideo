@@ -88,7 +88,7 @@ export function ApkDownloadButton() {
 
   const apkUrl = manifest
     ? new URL(manifest.url, window.location.origin).toString()
-    : `${window.location.origin}/apk/kvideo-1.0.5.apk`;
+    : `${window.location.origin}/apk/kvideo-1.0.6.apk`;
   const notesText = manifest?.notes?.length ? `\n\n${manifest.notes.map((n) => `· ${n}`).join('\n')}` : '';
 
   // 浏览器：普通下载链接；旧版 App 壳（无桥 WebView）则提示改用系统浏览器下载

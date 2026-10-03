@@ -167,14 +167,14 @@
         android:id="@+id/splash_ad_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFFFF"
+        android:background="#F4FAF3"
         android:visibility="gone">
 
         <ImageView
             android:id="@+id/splash_ad_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitCenter"
+            android:scaleType="centerCrop"
             android:src="@drawable/splash_ad"
             android:contentDescription="开屏广告" />
 
