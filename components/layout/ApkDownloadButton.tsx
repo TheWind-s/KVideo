@@ -24,18 +24,6 @@ interface ApkReleaseManifest {
   notes?: string[];
 }
 
-interface AndroidBridge {
-  getAppVersionCode?: () => number;
-  getAppVersionName?: () => string;
-  downloadUpdate?: (url: string) => void;
-}
-
-declare global {
-  interface Window {
-    KVideoAndroid?: AndroidBridge;
-  }
-}
-
 type UpdateState = 'browser' | 'checking' | 'latest' | 'update';
 
 /** Android WebView 的 UA 带有 "; wv)" 标记；旧版 App 壳无 JS 桥也无下载监听，点下载链接会被静默吞掉 */

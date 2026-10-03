@@ -11,16 +11,7 @@ import { siteConfig } from '@/lib/config/site-config';
  * - 浏览器：优先 Web Share API，不支持则复制链接到剪贴板并提示
  */
 
-interface AndroidShareBridge {
-  shareText?: (text: string) => void;
-}
-
-declare global {
-  interface Window {
-    KVideoAndroid?: AndroidShareBridge;
-  }
-}
-
+// Window.KVideoAndroid 的全局声明见 ApkDownloadButton.tsx（含 shareText）
 export function ShareButton() {
   const [copied, setCopied] = useState(false);
 
