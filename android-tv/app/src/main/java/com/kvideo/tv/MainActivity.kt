@@ -106,10 +106,13 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * 开屏广告：以独立 Dialog 窗口展示 5 秒。
-     * Dialog 窗口由 WindowManager 直接合成，必然浮于 Activity 整个视图层级
-     * （含 WebView 的合成层）之上，任何机型上都不可能被覆盖；
-     * 广告展示期间 WebView 在下方正常加载，关闭后页面即已就绪，不再白屏。
+     * 开屏广告：以独立 Dialog 窗口展示 5 秒后自动关闭。
+     *
+     * 不提供「跳过」按钮——实测手机里的无障碍类工具（梨跳跳等自动跳广告 App）
+     * 会扫描"跳过"按钮，通过无障碍动作和注入触摸手势两种方式连点，任何可点击
+     * 控件都会被它瞬间命中。广告页本身无可点击元素：
+     *   - 点不动（无任何点击监听、外部点击不取消、返回键被吞掉）
+     *   - 5 秒倒计时到点自动淡出关闭，下方 WebView 已预加载完成
      */
     private fun showSplashAd() {
         val dialog = android.app.Dialog(this, R.style.SplashAdDialog)
@@ -120,27 +123,25 @@ class MainActivity : ComponentActivity() {
         )
         dialog.setCancelable(false)
         dialog.setCanceledOnTouchOutside(false)
+        // 广告期间吞掉所有按键（含返回键/手柄确认键/无障碍注入的全局返回）
+        dialog.setOnKeyListener { _, _, _ -> true }
 
-        val skip = dialog.findViewById<TextView>(R.id.splash_ad_skip)
+        val countdown = dialog.findViewById<TextView>(R.id.splash_ad_countdown)
         val version = dialog.findViewById<TextView>(R.id.splash_ad_version)
         val adImage = dialog.findViewById<ImageView>(R.id.splash_ad_image)
         version.text = "v${BuildConfig.VERSION_NAME}"
 
-        skip.setOnClickListener { hideSplashAd() }
         splashDialog = dialog
         dialog.show()
 
-        // 倒计时从广告图真正绘制的第一帧才开始计：
-        // 图片解码需要时间，若在 show() 时就启动 5s 计时，
-        // 高分辨率图解码期间倒计时已流失，用户只能看到广告最后一两秒
+        // 倒计时从广告图真正绘制的第一帧才开始计，保证看满 5 秒
         splashAdCountDown?.cancel()
         adImage.post {
-            // post 回调执行时对话框可能已被关闭
             if (splashDialog !== dialog) return@post
             splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
                 override fun onTick(millisUntilFinished: Long) {
                     val remain = ((millisUntilFinished + 999) / 1000L).toInt()
-                    skip.text = "跳过 ${remain}s"
+                    countdown.text = "${remain}s"
                 }
 
                 override fun onFinish() {
