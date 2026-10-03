@@ -12,4 +12,15 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
     </style>
+
+    <!-- 开屏广告独立窗口：全屏、无浮层边距、无压暗，浮于 Activity（含 WebView）之上 -->
+    <style name="SplashAdDialog" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowBackground">#F4FAF3</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
 </resources>

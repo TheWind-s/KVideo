@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 开屏广告布局：由独立 Dialog 窗口承载，浮于 Activity 全部内容（含 WebView）之上 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F4FAF3">
+
+    <ImageView
+        android:id="@+id/splash_ad_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/splash_ad"
+        android:contentDescription="开屏广告" />
+
+    <TextView
+        android:id="@+id/splash_ad_skip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="#CC000000"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="7dp"
+        android:text="跳过 5s"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center" />
+
+    <!-- 版本水印：用于确认设备实际安装的包版本 -->
+    <TextView
+        android:id="@+id/splash_ad_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="12dp"
+        android:textColor="#66000000"
+        android:textSize="12sp" />
+</FrameLayout>

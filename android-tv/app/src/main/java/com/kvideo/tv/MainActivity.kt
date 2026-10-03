@@ -81,8 +81,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var openButton: Button
     private lateinit var saveButton: Button
     private lateinit var prefs: android.content.SharedPreferences
-    private lateinit var splashAdContainer: FrameLayout
-    private lateinit var splashAdSkip: TextView
+    private var splashDialog: android.app.Dialog? = null
     private var splashAdCountDown: android.os.CountDownTimer? = null
     private var customView: View? = null
     private var customViewCallback: CustomViewCallback? = null
@@ -105,21 +104,31 @@ class MainActivity : ComponentActivity() {
             }
     }
 
-    /** 开屏广告：显示 5 秒，右上角倒计时，可手动跳过 */
+    /**
+     * 开屏广告：以独立 Dialog 窗口展示 5 秒。
+     * Dialog 窗口由 WindowManager 直接合成，必然浮于 Activity 整个视图层级
+     * （含 WebView 的合成层）之上，任何机型上都不可能被覆盖；
+     * 广告展示期间 WebView 在下方正常加载，关闭后页面即已就绪，不再白屏。
+     */
     private fun showSplashAd() {
-        splashAdContainer.alpha = 1f
-        splashAdContainer.visibility = View.VISIBLE
-        // WebView 是独立合成层，部分机型上会盖住普通 View 造成广告"一闪而过"；
-        // 广告期间直接隐藏 WebView，广告层之上不可能有任何东西，也无法出现白屏
-        webView.visibility = View.INVISIBLE
-        splashAdContainer.bringToFront()
-        splashAdContainer.elevation = 1000f
+        val dialog = android.app.Dialog(this, R.style.SplashAdDialog)
+        dialog.setContentView(R.layout.splash_ad)
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        dialog.setCancelable(false)
+        dialog.setCanceledOnTouchOutside(false)
+
+        val skip = dialog.findViewById<TextView>(R.id.splash_ad_skip)
+        val version = dialog.findViewById<TextView>(R.id.splash_ad_version)
+        version.text = "v${BuildConfig.VERSION_NAME}"
 
         splashAdCountDown?.cancel()
         splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
                 val remain = ((millisUntilFinished + 999) / 1000L).toInt()
-                splashAdSkip.text = "跳过 ${remain}s"
+                skip.text = "跳过 ${remain}s"
             }
 
             override fun onFinish() {
@@ -127,25 +136,21 @@ class MainActivity : ComponentActivity() {
             }
         }.start()
 
-        splashAdSkip.setOnClickListener { hideSplashAd() }
+        skip.setOnClickListener { hideSplashAd() }
+        splashDialog = dialog
+        dialog.show()
     }
 
     private fun hideSplashAd() {
         splashAdCountDown?.cancel()
         splashAdCountDown = null
-        if (splashAdContainer.visibility != View.GONE) {
-            splashAdContainer.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .withEndAction {
-                    splashAdContainer.visibility = View.GONE
-                    splashAdContainer.alpha = 1f
-                    // 广告结束再亮出 WebView（加载错误页时不恢复，交给错误 UI 接管）
-                    if (errorContainer.visibility != View.VISIBLE) {
-                        webView.visibility = View.VISIBLE
-                    }
-                }
-        }
+        val dialog = splashDialog ?: return
+        splashDialog = null
+        val decor = dialog.window?.decorView ?: run { dialog.dismiss(); return }
+        decor.animate()
+            .alpha(0f)
+            .setDuration(200)
+            .withEndAction { dialog.dismiss() }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -168,8 +173,6 @@ class MainActivity : ComponentActivity() {
         statusText = findViewById(R.id.status_text)
         openButton = findViewById(R.id.open_button)
         saveButton = findViewById(R.id.save_button)
-        splashAdContainer = findViewById(R.id.splash_ad_container)
-        splashAdSkip = findViewById(R.id.splash_ad_skip)
 
         showSplashAd()
 
@@ -403,6 +406,8 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         splashAdCountDown?.cancel()
         splashAdCountDown = null
+        splashDialog?.dismiss()
+        splashDialog = null
         exitCustomFullscreen()
         downloadCompleteReceiver?.let {
             try {
