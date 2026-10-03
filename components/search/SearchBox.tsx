@@ -12,9 +12,11 @@ interface SearchBoxProps {
     initialQuery?: string;
     placeholder?: string;
     isPremium?: boolean;
+    /** 搜索框聚焦状态变化回调（用于移动端折叠类型切换器等） */
+    onFocusChange?: (focused: boolean) => void;
 }
 
-export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = '搜索电影、电视剧、综艺...', isPremium = false }: SearchBoxProps) {
+export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = '搜索电影、电视剧、综艺...', isPremium = false, onFocusChange }: SearchBoxProps) {
     const [query, setQuery] = useState(initialQuery);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +68,20 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
         navigateDropdown,
     });
 
+    const onFocus = () => {
+        handleInputFocus();
+        onFocusChange?.(true);
+    };
+
+    const onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        handleInputBlur(e);
+        // 失焦到下拉内部不算真正失焦
+        const relatedTarget = e.relatedTarget as HTMLElement | null;
+        if (!relatedTarget || !relatedTarget.closest('.search-history-dropdown')) {
+            onFocusChange?.(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit} className="relative group" style={{ isolation: 'isolate' }}>
             <Input
@@ -73,8 +89,8 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
+                onFocus={onFocus}
+                onBlur={onBlur}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
                 className="h-12 md:h-14 text-base sm:text-lg pr-28 sm:pr-36 md:pr-44 truncate"

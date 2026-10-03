@@ -5,6 +5,8 @@ export type ContentType = 'movie' | 'tv' | 'short';
 interface ContentTypeToggleProps {
   value: ContentType;
   onChange: (value: ContentType) => void;
+  /** 移动端搜索聚焦时折叠为单个当前选中胶囊，给搜索框让位 */
+  collapsed?: boolean;
 }
 
 const OPTIONS: { key: ContentType; label: string }[] = [
@@ -13,8 +15,26 @@ const OPTIONS: { key: ContentType; label: string }[] = [
   { key: 'short', label: '短剧' },
 ];
 
-export function ContentTypeToggle({ value, onChange }: ContentTypeToggleProps) {
+export function ContentTypeToggle({ value, onChange, collapsed = false }: ContentTypeToggleProps) {
   const activeIndex = OPTIONS.findIndex((o) => o.key === value);
+  const activeLabel = OPTIONS[activeIndex]?.label ?? '电影';
+
+  // 折叠态：只显示当前选中的小胶囊，点击可循环切换到下一个
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          const next = OPTIONS[(activeIndex + 1) % OPTIONS.length];
+          onChange(next.key);
+        }}
+        className="flex-shrink-0 h-12 px-3 rounded-full bg-[var(--accent-color)] text-white text-xs font-bold flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95"
+        title={`当前：${activeLabel}，点击切换`}
+      >
+        {activeLabel}
+      </button>
+    );
+  }
 
   return (
     <div className="relative box-border h-12 md:h-14 w-44 sm:w-60 p-0.5 flex-shrink-0 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-full grid grid-cols-3 backdrop-blur-2xl shadow-sm ring-1 ring-white/10 overflow-hidden">

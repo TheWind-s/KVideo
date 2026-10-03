@@ -16,6 +16,8 @@ interface SearchFormProps {
   isPremium?: boolean;
   /** Stretch to fill a flex row (used with a sibling control) */
   inline?: boolean;
+  /** 搜索框聚焦状态变化回调 */
+  onFocusChange?: (focused: boolean) => void;
 }
 
 export function SearchForm({
@@ -30,6 +32,7 @@ export function SearchForm({
   placeholder,
   isPremium = false,
   inline = false,
+  onFocusChange,
 }: SearchFormProps) {
   return (
     <div className={inline ? 'flex-1 min-w-0' : 'max-w-3xl mx-auto w-full'}>
@@ -39,6 +42,7 @@ export function SearchForm({
         initialQuery={initialQuery}
         placeholder={placeholder}
         isPremium={isPremium}
+        onFocusChange={onFocusChange}
       />
 
       {/* Loading Animation */}

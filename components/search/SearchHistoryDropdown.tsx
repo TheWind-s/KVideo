@@ -9,7 +9,6 @@
 import { useEffect, useRef } from 'react';
 import { Icons } from '@/components/ui/Icon';
 import type { SearchHistoryItem } from '@/lib/store/search-history-store';
-import { SearchHistoryEmptyState } from './SearchHistoryEmptyState';
 import { SearchHistoryHeader } from './SearchHistoryHeader';
 import { SearchHistoryListItem } from './SearchHistoryListItem';
 
@@ -22,6 +21,18 @@ interface SearchHistoryDropdownProps {
   onRemoveItem: (query: string) => void;
   onClearAll: () => void;
 }
+
+/** 热门搜索词（无服务端统计时的静态推荐，可按需调整） */
+const HOT_SEARCHES = [
+  '变形金刚',
+  '火影忍者',
+  '复仇者联盟',
+  '战狼',
+  '红海行动',
+  '流浪地球',
+  '狂飙',
+  '庆余年',
+];
 
 export function SearchHistoryDropdown({
   isOpen,
@@ -50,8 +61,38 @@ export function SearchHistoryDropdown({
     }
   }, [highlightedIndex]);
 
-  if (!isOpen || searchHistory.length === 0) {
+  if (!isOpen) {
     return null;
+  }
+
+  // 无搜索历史时展示「大家都在搜」热门推荐
+  if (searchHistory.length === 0) {
+    return (
+      <div
+        ref={dropdownRef}
+        className="search-history-dropdown absolute top-full left-0 right-0 mt-2 z-[9999]"
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        <div className="search-history-list px-3 py-3">
+          <p className="text-xs font-semibold text-[var(--text-color-secondary)] mb-2 px-1">
+            大家都在搜
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {HOT_SEARCHES.map((term) => (
+              <button
+                key={term}
+                type="button"
+                onClick={() => onSelectItem(term)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[var(--glass-bg)] border border-[var(--glass-border)] text-sm text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] hover:border-[color-mix(in_srgb,var(--accent-color)_40%,var(--glass-border))] transition-all duration-200 cursor-pointer"
+              >
+                <span className="text-red-500">🔥</span>
+                {term}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

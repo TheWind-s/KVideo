@@ -13,6 +13,7 @@ import { NavAdBanner } from '@/components/layout/NavAdBanner';
 import { SearchResults } from '@/components/home/SearchResults';
 import { useHomePage } from '@/lib/hooks/useHomePage';
 import { useLatencyPing } from '@/lib/hooks/useLatencyPing';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 function HomePage() {
   const {
@@ -48,6 +49,11 @@ function HomePage() {
     enabled: hasSearched && results.length > 0,
   });
 
+  // 移动端搜索聚焦时折叠类型切换器，给搜索框让位
+  const isMobile = useIsMobile();
+  const [searchFocused, setSearchFocused] = useState(false);
+  const shouldCollapseToggle = isMobile && searchFocused && !hasSearched;
+
   return (
     <div className="min-h-screen">
       {/* Glass Navbar */}
@@ -69,7 +75,7 @@ function HomePage() {
       <div className={`relative z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 sm:mb-8 ${hasSearched ? 'mt-3 sm:mt-4' : ''}`}>
         <div className="flex items-center gap-2 sm:gap-4">
           {!hasSearched && (
-            <ContentTypeToggle value={contentType} onChange={setContentType} />
+            <ContentTypeToggle value={contentType} onChange={setContentType} collapsed={shouldCollapseToggle} />
           )}
           <SearchForm
             inline
@@ -81,6 +87,7 @@ function HomePage() {
             currentSource=""
             checkedSources={completedSources}
             totalSources={totalSources}
+            onFocusChange={setSearchFocused}
           />
         </div>
       </div>
