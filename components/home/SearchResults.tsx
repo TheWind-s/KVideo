@@ -105,6 +105,7 @@ export function SearchResults({
                     <VideoListView
                         videos={finalFilteredVideos}
                         isPremium={isPremium}
+                        latencies={latencies}
                     />
                 )
             ) : (

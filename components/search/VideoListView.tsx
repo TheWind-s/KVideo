@@ -8,18 +8,21 @@
  * 底部「播放」「详情」按钮（详情直达播放页"简介"标签）。
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Icons } from '@/components/ui/Icon';
+import { LatencyBadge } from '@/components/ui/LatencyBadge';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
 import { Video } from '@/lib/types';
 import { htmlToText } from '@/lib/utils/html';
 import { parseVideoTitle } from '@/lib/utils/video';
+import { useResolutionProbe, type ResolutionInfo } from '@/lib/hooks/useResolutionProbe';
 
 interface VideoListViewProps {
   videos: Video[];
   isPremium?: boolean;
+  latencies?: Record<string, number>;
 }
 
 const PAGE_SIZE = 12;
@@ -45,10 +48,16 @@ const VideoListRow = memo(function VideoListRow({
   video,
   index,
   isPremium,
+  latency,
+  resolution,
+  isProbing,
 }: {
   video: Video;
   index: number;
   isPremium: boolean;
+  latency?: number;
+  resolution?: ResolutionInfo | null;
+  isProbing?: boolean;
 }) {
   const { cleanTitle } = parseVideoTitle(video.vod_name);
   const playUrl = buildPlayerUrl(video, index, isPremium);
@@ -155,6 +164,24 @@ const VideoListRow = memo(function VideoListRow({
           </p>
         )}
 
+        {/* 画质 + 延迟标签（与桌面网格一致：画质来自分辨率探测，延迟来自源测速） */}
+        {(resolution || isProbing || latency !== undefined) && (
+          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+            {resolution ? (
+              <span
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${resolution.color}`}
+              >
+                {resolution.label}
+              </span>
+            ) : isProbing ? (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white/50 bg-gray-500/50 animate-pulse">
+                ...
+              </span>
+            ) : null}
+            {latency !== undefined && <LatencyBadge latency={latency} className="flex-shrink-0" />}
+          </div>
+        )}
+
         {/* 操作按钮 */}
         <div className="mt-auto pt-2 flex items-center gap-2.5">
           <Link
@@ -200,6 +227,7 @@ function VideoListSkeleton() {
 export const VideoListView = memo(function VideoListView({
   videos,
   isPremium = false,
+  latencies = {},
 }: VideoListViewProps) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -210,6 +238,29 @@ export const VideoListView = memo(function VideoListView({
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [firstKey]);
+
+  const visibleVideos = useMemo(() => videos.slice(0, visibleCount), [videos, visibleCount]);
+
+  // 分辨率探测列表：SSE 流式追加期间 results 数组持续变化，若直接跟随会导致
+  // 探测请求被反复中止重发。这里按"可见行 id 集合"稳定化，并防抖 600ms，
+  // 等结果流平息后只发起一次探测（翻页新增行时自然再触发）。
+  const visibleKey = visibleVideos.map((v) => `${v.source}:${v.vod_id}`).join('|');
+  const [settledKey, setSettledKey] = useState(visibleKey);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettledKey(visibleKey), 600);
+    return () => clearTimeout(timer);
+  }, [visibleKey]);
+
+  const probeList = useMemo(() => {
+    if (!settledKey) return [];
+    const wanted = new Set(settledKey.split('|'));
+    return visibleVideos
+      .filter((v) => wanted.has(`${v.source}:${v.vod_id}`))
+      .map((v) => ({ id: String(v.vod_id), source: v.source }));
+    // settledKey 变化后从最新 visibleVideos 取，避免探测过期行
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settledKey, videos, visibleCount]);
+  const { resolutions, isProbing } = useResolutionProbe(probeList);
 
   const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) observerRef.current.disconnect();
@@ -229,19 +280,23 @@ export const VideoListView = memo(function VideoListView({
     }
   }, []);
 
-  const visibleVideos = videos.slice(0, visibleCount);
-
   return (
     <div role="list" aria-label="视频搜索结果">
       <div className="flex flex-col gap-3">
-        {visibleVideos.map((video, index) => (
-          <VideoListRow
-            key={`${video.vod_id}-${index}`}
-            video={video}
-            index={index}
-            isPremium={isPremium}
-          />
-        ))}
+        {visibleVideos.map((video, index) => {
+          const resolution = resolutions[`${video.source}:${video.vod_id}`];
+          return (
+            <VideoListRow
+              key={`${video.vod_id}-${index}`}
+              video={video}
+              index={index}
+              isPremium={isPremium}
+              latency={latencies[video.source] ?? video.latency}
+              resolution={resolution}
+              isProbing={isProbing && !resolution}
+            />
+          );
+        })}
       </div>
 
       {visibleCount < videos.length && (
