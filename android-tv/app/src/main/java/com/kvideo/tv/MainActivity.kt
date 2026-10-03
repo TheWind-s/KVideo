@@ -610,7 +610,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // 时间戳文件名避免重复下载时目标文件已存在导致失败
-                val fileName = "yangyuyingshi-${System.currentTimeMillis()}.apk"
+                val fileName = "洋芋影视-${System.currentTimeMillis()}.apk"
                 val request = DownloadManager.Request(Uri.parse(url)).apply {
                     setTitle("洋芋影视")
                     setDescription("正在下载最新版安装包，完成后点击安装")
