@@ -107,11 +107,17 @@ class MainActivity : ComponentActivity() {
 
     /** 开屏广告：显示 5 秒，右上角倒计时，可手动跳过 */
     private fun showSplashAd() {
+        splashAdContainer.alpha = 1f
         splashAdContainer.visibility = View.VISIBLE
+        // WebView 是硬件加速 Surface，会覆盖同层级普通 View；必须把广告层
+        // 提到最前并设高 elevation，否则广告一闪就被 WebView 白底盖住
+        splashAdContainer.bringToFront()
+        splashAdContainer.elevation = 1000f
+
         splashAdCountDown?.cancel()
         splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
-                val remain = (millisUntilFinished / 1000L).toInt()
+                val remain = ((millisUntilFinished + 999) / 1000L).toInt()
                 splashAdSkip.text = "跳过 ${remain}s"
             }
 
