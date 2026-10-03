@@ -1,3 +1,4 @@
+import { getRequestContext } from '@cloudflare/next-on-pages';
 import { cnDate, incr, type CloudflareStatsEnv } from '@/lib/stats/kv';
 
 export const runtime = 'edge';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
  * 浏览器、系统下载器、App 内 DownloadManager 都会自动跟随跳转。
  * 任何异常都不能挡住下载。
  */
-export async function GET(request: Request, env: CloudflareStatsEnv) {
+export async function GET(request: Request) {
   const url = new URL(request.url);
   const version = url.searchParams.get('v') ?? '';
   const origin = url.origin;
@@ -20,7 +21,13 @@ export async function GET(request: Request, env: CloudflareStatsEnv) {
 
   const target = `${origin}/apk/kvideo-${version}.apk`;
 
-  const kv = env?.KV_STATS;
+  let kv: CloudflareStatsEnv['KV_STATS'];
+  try {
+    kv = (getRequestContext().env as unknown as CloudflareStatsEnv).KV_STATS;
+  } catch {
+    kv = undefined;
+  }
+
   if (kv) {
     try {
       const day = cnDate();

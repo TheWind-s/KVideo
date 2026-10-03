@@ -1,3 +1,4 @@
+import { getRequestContext } from '@cloudflare/next-on-pages';
 import { recentDates, readInt, type CloudflareStatsEnv } from '@/lib/stats/kv';
 
 export const runtime = 'edge';
@@ -8,9 +9,10 @@ export const dynamic = 'force-dynamic';
  * 必须携带 ?key=xxx 且与环境变量 STATS_KEY 一致；
  * 未配置密钥或密钥错误一律 404，不暴露任何信息。
  */
-export async function GET(request: Request, env: CloudflareStatsEnv) {
+export async function GET(request: Request) {
+  const env = getRequestContext().env as unknown as CloudflareStatsEnv;
   const key = new URL(request.url).searchParams.get('key');
-  if (!env?.STATS_KEY || !key || key !== env.STATS_KEY) {
+  if (!env.STATS_KEY || !key || key !== env.STATS_KEY) {
     return new Response('Not Found', { status: 404 });
   }
 
