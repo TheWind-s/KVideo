@@ -758,6 +758,22 @@ class MainActivity : ComponentActivity() {
             startApkDownload(url)
         }
 
+        /** 网页点击「分享」时拉起系统分享面板（分享站点链接文案） */
+        @JavascriptInterface
+        fun shareText(text: String) {
+            runOnUiThread {
+                try {
+                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, text)
+                    }
+                    startActivity(Intent.createChooser(sendIntent, "分享洋芋影视"))
+                } catch (error: Exception) {
+                    Log.w(TAG, "shareText failed", error)
+                }
+            }
+        }
+
         @JavascriptInterface
         fun enterPictureInPicture(
             width: Int,

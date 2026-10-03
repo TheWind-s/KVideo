@@ -88,7 +88,7 @@ export function ApkDownloadButton() {
 
   const apkUrl = manifest
     ? new URL(manifest.url, window.location.origin).toString()
-    : `${window.location.origin}/api/apk/download?v=1.0.9`;
+    : `${window.location.origin}/api/apk/download?v=1.0.10`;
   const notesText = manifest?.notes?.length ? `\n\n${manifest.notes.map((n) => `· ${n}`).join('\n')}` : '';
 
   // 浏览器：普通下载链接；旧版 App 壳（无桥 WebView）则提示改用系统浏览器下载
@@ -120,6 +120,9 @@ export function ApkDownloadButton() {
     );
   }
 
+  // App 内已是最新：不再展示任何按钮
+  if (state === 'latest') return null;
+
   // App 内有更新：高亮胶囊，点击走原生下载安装
   if (state === 'update' && manifest) {
     return (
@@ -150,23 +153,5 @@ export function ApkDownloadButton() {
     );
   }
 
-  // App 内已是最新：低调版本胶囊（仍可点击重新下载安装包）
-  return (
-    <button
-      type="button"
-      title={`当前已是最新版本${notesText}`}
-      data-focusable
-      onClick={() => {
-        try {
-          window.KVideoAndroid?.downloadUpdate?.(apkUrl);
-        } catch {
-          window.open(apkUrl, '_blank');
-        }
-      }}
-      className="inline-flex h-8 sm:h-10 items-center justify-center gap-1.5 px-2.5 sm:px-3.5 rounded-[var(--radius-full)] border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-color-secondary)] text-xs sm:text-sm hover:text-[var(--accent-color)] transition-all duration-200 cursor-pointer whitespace-nowrap"
-    >
-      <Check size={15} className="text-[var(--accent-color)] sm:w-[17px] sm:h-[17px]" />
-      <span className="hidden sm:inline">v{manifest?.versionName ?? ''}</span>
-    </button>
-  );
+  return null;
 }

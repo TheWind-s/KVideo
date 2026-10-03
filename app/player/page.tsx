@@ -15,7 +15,6 @@ import { useVideoPlayer } from '@/lib/hooks/useVideoPlayer';
 import { useHistory } from '@/lib/store/history-store';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
-import { PlayerNavbar } from '@/components/player/PlayerNavbar';
 import { settingsStore } from '@/lib/store/settings-store';
 import { premiumModeSettingsStore } from '@/lib/store/premium-mode-settings';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -405,10 +404,8 @@ function PlayerContent() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
-      {/* Glass Navbar */}
-      <PlayerNavbar isPremium={isPremium} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 pt-2">
+      {/* 顶部 Logo/返回导航已移除，返回按钮内嵌在播放器左上角 */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent mb-4"></div>

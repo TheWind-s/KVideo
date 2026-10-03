@@ -7,6 +7,7 @@ import { CustomVideoPlayer } from './CustomVideoPlayer';
 import { VideoPlayerError } from './VideoPlayerError';
 import { VideoPlayerEmpty } from './VideoPlayerEmpty';
 import { usePlayerSettings } from './hooks/usePlayerSettings';
+import { ChevronLeft } from 'lucide-react';
 
 interface VideoPlayerProps {
   playUrl: string;
@@ -181,6 +182,17 @@ export function VideoPlayer({
 
   return (
     <div data-no-spatial className="relative">
+      {/* 左上角返回按钮（顶部导航栏已移除，返回入口内嵌到播放器上） */}
+      <button
+        type="button"
+        onClick={onBack}
+        title="返回"
+        aria-label="返回"
+        data-focusable
+        className="absolute top-3 left-3 z-30 w-9 h-9 flex items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md hover:bg-black/70 active:scale-95 transition-all duration-200 cursor-pointer"
+      >
+        <ChevronLeft size={22} />
+      </button>
       {/* Mode Indicator Badge - controlled by settings */}
       {showModeIndicator && (
         <div className="absolute top-3 right-3 z-30">
