@@ -81,6 +81,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var openButton: Button
     private lateinit var saveButton: Button
     private lateinit var prefs: android.content.SharedPreferences
+    private lateinit var splashAdContainer: FrameLayout
+    private lateinit var splashAdSkip: TextView
+    private var splashAdCountDown: android.os.CountDownTimer? = null
     private var customView: View? = null
     private var customViewCallback: CustomViewCallback? = null
     private var wasSetupVisibleBeforeFullscreen = false
@@ -100,6 +103,38 @@ class MainActivity : ComponentActivity() {
                 backOverlay.visibility = View.GONE
                 backOverlay.alpha = 1f
             }
+    }
+
+    /** 开屏广告：显示 5 秒，右上角倒计时，可手动跳过 */
+    private fun showSplashAd() {
+        splashAdContainer.visibility = View.VISIBLE
+        splashAdCountDown?.cancel()
+        splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                val remain = (millisUntilFinished / 1000L).toInt()
+                splashAdSkip.text = "跳过 ${remain}s"
+            }
+
+            override fun onFinish() {
+                hideSplashAd()
+            }
+        }.start()
+
+        splashAdSkip.setOnClickListener { hideSplashAd() }
+    }
+
+    private fun hideSplashAd() {
+        splashAdCountDown?.cancel()
+        splashAdCountDown = null
+        if (splashAdContainer.visibility != View.GONE) {
+            splashAdContainer.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction {
+                    splashAdContainer.visibility = View.GONE
+                    splashAdContainer.alpha = 1f
+                }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -122,6 +157,10 @@ class MainActivity : ComponentActivity() {
         statusText = findViewById(R.id.status_text)
         openButton = findViewById(R.id.open_button)
         saveButton = findViewById(R.id.save_button)
+        splashAdContainer = findViewById(R.id.splash_ad_container)
+        splashAdSkip = findViewById(R.id.splash_ad_skip)
+
+        showSplashAd()
 
         retryButton.setOnClickListener {
             errorContainer.visibility = View.GONE
@@ -351,6 +390,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        splashAdCountDown?.cancel()
+        splashAdCountDown = null
         exitCustomFullscreen()
         downloadCompleteReceiver?.let {
             try {
