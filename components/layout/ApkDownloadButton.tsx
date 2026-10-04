@@ -32,11 +32,23 @@ function isBridgelessWebView(): boolean {
   return /; wv\)/.test(navigator.userAgent) && typeof window.KVideoAndroid?.downloadUpdate !== 'function';
 }
 
+/**
+ * 国产手机自带浏览器（一加/OPPO/小米/vivo/华为等）对 pages.dev 境外域名的
+ * APK 下载存在静默拦截，需要给用户长按/换浏览器的明确引导
+ */
+function isDomesticVendorBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /HeyTapBrowser|ColorBrowser|OPPOBrowser|MiuiBrowser|VivoBrowser|HuaweiBrowser|SamsungBrowser/i.test(
+    navigator.userAgent,
+  );
+}
+
 export function ApkDownloadButton() {
   const [manifest, setManifest] = useState<ApkReleaseManifest | null>(null);
   const [state, setState] = useState<UpdateState>('checking');
   const [downloading, setDownloading] = useState(false);
   const [legacyHint, setLegacyHint] = useState(false);
+  const [vendorHint, setVendorHint] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,10 +101,17 @@ export function ApkDownloadButton() {
           title="下载洋芋影视 Android 安装包"
           data-focusable
           onClick={(e) => {
-            if (!isBridgelessWebView()) return;
-            e.preventDefault();
-            setLegacyHint(true);
-            setTimeout(() => setLegacyHint(false), 6000);
+            if (isBridgelessWebView()) {
+              e.preventDefault();
+              setLegacyHint(true);
+              setTimeout(() => setLegacyHint(false), 6000);
+              return;
+            }
+            // 国产自带浏览器可能静默拦截：不阻止默认下载，同时弹出兜底引导
+            if (isDomesticVendorBrowser()) {
+              setVendorHint(true);
+              setTimeout(() => setVendorHint(false), 12000);
+            }
           }}
           className="inline-flex h-8 sm:h-10 items-center justify-center gap-1.5 px-2.5 sm:px-4 rounded-[var(--radius-full)] border border-[var(--glass-border)] bg-[var(--glass-bg)] text-[var(--text-color)] text-xs sm:text-sm font-medium hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] hover:border-[color-mix(in_srgb,var(--accent-color)_40%,var(--glass-border))] transition-all duration-200 cursor-pointer whitespace-nowrap"
         >
@@ -100,8 +119,16 @@ export function ApkDownloadButton() {
           <span>下载APP</span>
         </a>
         {legacyHint && (
-          <span className="absolute top-full right-0 mt-2 w-56 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-[var(--shadow-md)] text-xs leading-5 text-[var(--text-color)] z-[3000]">
+          <span className="absolute top-full right-0 mt-2 w-60 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-[var(--shadow-md)] text-xs leading-5 text-[var(--text-color)] z-[3000]">
             当前 App 版本过旧，无法直接下载。请用手机浏览器打开本站，点「下载APP」安装新版；之后就能在 App 内一键更新。
+          </span>
+        )}
+        {vendorHint && (
+          <span className="absolute top-full right-0 mt-2 w-64 p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-[var(--shadow-md)] text-xs leading-5 text-[var(--text-color)] z-[3000]">
+            没有开始下载？请尝试：
+            <br />1. <b>长按</b>「下载APP」按钮，选择「下载链接」；
+            <br />2. 或复制本站地址，用 <b>Chrome / 夸克 / UC</b> 浏览器打开后下载；
+            <br />3. 下载完成后在通知栏或「下载管理」里点击安装。
           </span>
         )}
       </span>
