@@ -291,6 +291,8 @@ function PlayerContent() {
   // Track current source for switching
   const [currentSourceId, setCurrentSourceId] = useState(source);
   const playerTimeRef = useRef(0);
+  /** 收藏区域：点击文字/空白处等价于点击心形按钮 */
+  const favWrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCurrentSourceId(source);
@@ -469,25 +471,44 @@ function PlayerContent() {
                 />
               </div>
 
-              {/* Favorite Button for current video */}
+              {/* Favorite Button for current video + 播放提示 */}
               {videoData && videoId && (
-                <div className="flex items-center gap-3 mt-4">
-                  <FavoriteButton
-                    videoId={videoId}
-                    source={source}
-                    title={videoData.vod_name || title || '未知视频'}
-                    poster={videoData.vod_pic}
-                    type={videoData.type_name}
-                    year={videoData.vod_year}
-                    sourceMap={Object.fromEntries(
-                      (groupedSources.length > 0 ? groupedSources : [{ id: videoId, source }]).map((item) => [item.source, item.id])
-                    )}
-                    size={20}
-                    isPremium={isPremium}
-                  />
-                  <span className="text-sm text-[var(--text-color-secondary)]">
-                    收藏这个视频
-                  </span>
+                <div className="flex items-center justify-between gap-3 mt-4">
+                  <div
+                    ref={favWrapRef}
+                    role="button"
+                    tabIndex={0}
+                    className="flex items-center gap-1.5 flex-shrink-0 cursor-pointer group select-none"
+                    onClick={() => favWrapRef.current?.querySelector('button')?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        favWrapRef.current?.querySelector('button')?.click();
+                      }
+                    }}
+                  >
+                    <FavoriteButton
+                      videoId={videoId}
+                      source={source}
+                      title={videoData.vod_name || title || '未知视频'}
+                      poster={videoData.vod_pic}
+                      type={videoData.type_name}
+                      year={videoData.vod_year}
+                      sourceMap={Object.fromEntries(
+                        (groupedSources.length > 0 ? groupedSources : [{ id: videoId, source }]).map((item) => [item.source, item.id])
+                      )}
+                      size={20}
+                      isPremium={isPremium}
+                    />
+                    <span className="text-sm text-[var(--text-color-secondary)] group-hover:text-[var(--accent-color)] transition-colors">
+                      收藏
+                    </span>
+                  </div>
+                  {/* 播放小贴士 */}
+                  <div className="text-[11px] leading-[1.35] text-[var(--text-color-secondary)] text-right space-y-0.5">
+                    <p>卡顿请刷新或更换延时低的视频源</p>
+                    <p>点击全屏后，画面自动切换为横屏</p>
+                  </div>
                 </div>
               )}
             </div>
