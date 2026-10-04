@@ -93,8 +93,8 @@ export function HistoryItem({ item, onRemove, isPremium = false }: HistoryItemPr
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-1 self-start opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Actions：触屏设备没有 hover，必须常驻显示；桌面端保留悬停显现 */}
+          <div className="flex flex-col gap-1 self-start opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity">
             {/* Favorite button */}
             <FavoriteButton
               videoId={item.videoId}

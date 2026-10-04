@@ -104,8 +104,8 @@ export function FavoritesItem({ item, onRemove, isPremium = false }: FavoritesIt
                         </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-col gap-1 self-start opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Actions：触屏设备常驻显示，桌面端悬停显现 */}
+                    <div className="flex flex-col gap-1 self-start opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity">
                         {/* Remove button */}
                         <button
                             onClick={(e) => {
