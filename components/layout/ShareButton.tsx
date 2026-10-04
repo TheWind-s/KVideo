@@ -11,7 +11,7 @@ import { siteConfig } from '@/lib/config/site-config';
  * - 浏览器：优先 Web Share API，不支持则复制链接到剪贴板并提示
  */
 
-// Window.KVideoAndroid 的全局声明见 ApkDownloadButton.tsx（含 shareText）
+// Window.KVideoAndroid 的全局声明见 types/global.d.ts（含 shareText）
 export function ShareButton() {
   const [copied, setCopied] = useState(false);
 
@@ -20,9 +20,12 @@ export function ShareButton() {
     const text = `${siteConfig.name} - ${siteConfig.description}\n${url}`;
 
     // App 内：走原生系统分享
+    // App 内旧桥（v1.0.10/1.0.11）：必须只传纯 URL。
+    // 若传"标题+换行+URL"混合文本，微信判定为纯文字消息，朋友圈入口会消失；
+    // 纯 URL 会被微信识别为网页链接，正常展示好友/朋友圈/收藏三个入口
     if (typeof window.KVideoAndroid?.shareText === 'function') {
       try {
-        window.KVideoAndroid.shareText(text);
+        window.KVideoAndroid.shareText(url);
         return;
       } catch {
         // 桥异常时走浏览器方案兜底

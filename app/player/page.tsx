@@ -302,9 +302,10 @@ function PlayerContent() {
     const videoTitle = videoData?.vod_name || title || '洋芋影视';
     const shareText = `${videoTitle} - 洋芋影视，点击直接观看\n${url}`;
 
+    // App 内旧桥（v1.0.10/1.0.11）：只传纯 URL，微信才会显示朋友圈入口
     if (typeof window.KVideoAndroid?.shareText === 'function') {
       try {
-        window.KVideoAndroid.shareText(shareText);
+        window.KVideoAndroid.shareText(url);
         return;
       } catch {
         // 桥异常时走浏览器方案兜底
