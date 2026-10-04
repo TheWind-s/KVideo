@@ -1,11 +1,9 @@
 {
-  "versionName": "1.0.10",
-  "versionCode": 11,
-  "url": "/api/apk/download?v=1.0.10",
+  "versionName": "1.0.11",
+  "versionCode": 12,
+  "url": "/api/apk/download?v=1.0.11",
   "publishedAt": "2026-10-04",
   "notes": [
-    "App 内已是最新版本时，不再显示下载按钮",
-    "导航栏新增分享按钮，一键分享网站链接给好友",
-    "播放页顶部 Logo/返回导航栏移除，返回按钮内嵌到播放器左上角，画面顶到屏幕最上方"
+    "开屏广告增加了手动关闭功能"
   ]
 }

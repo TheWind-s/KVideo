@@ -106,15 +106,15 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * 开屏广告：以独立 Dialog 窗口展示 5 秒后自动关闭。
+     * 开屏广告：以独立 Dialog 窗口展示，倒计时结束自动关闭，也可点「跳过」手动关闭。
      *
-     * 不提供「跳过」按钮——实测手机里的无障碍类工具（梨跳跳等自动跳广告 App）
-     * 会扫描"跳过"按钮，通过无障碍动作和注入触摸手势两种方式连点，任何可点击
-     * 控件都会被它瞬间命中。广告页本身无可点击元素：
-     *   - 点不动（无任何点击监听、外部点击不取消、返回键被吞掉）
-     *   - 5 秒倒计时到点自动淡出关闭，下方 WebView 已预加载完成
+     * 秒数、开关、广告图均来自云端配置（/apk/splash.json），由 SplashConfigLoader
+     * 缓存到本地，本次启动读缓存、后台静默更新，下次冷启动生效；首次安装或
+     * 拉取失败时使用内置默认（3 秒 + APK 内置广告图）。
      */
-    private fun showSplashAd() {
+    private fun showSplashAd(config: SplashConfig) {
+        if (!config.enabled) return
+
         val dialog = android.app.Dialog(this, R.style.SplashAdDialog)
         dialog.setContentView(R.layout.splash_ad)
         dialog.window?.setLayout(
@@ -123,25 +123,36 @@ class MainActivity : ComponentActivity() {
         )
         dialog.setCancelable(false)
         dialog.setCanceledOnTouchOutside(false)
-        // 广告期间吞掉所有按键（含返回键/手柄确认键/无障碍注入的全局返回）
-        dialog.setOnKeyListener { _, _, _ -> true }
 
         val countdown = dialog.findViewById<TextView>(R.id.splash_ad_countdown)
         val version = dialog.findViewById<TextView>(R.id.splash_ad_version)
         val adImage = dialog.findViewById<ImageView>(R.id.splash_ad_image)
         version.text = "v${BuildConfig.VERSION_NAME}"
 
+        // 优先使用云端下发的本地缓存图，解码失败保持 XML 中的内置图
+        config.localImagePath?.let { path ->
+            try {
+                val bmp = android.graphics.BitmapFactory.decodeFile(path)
+                if (bmp != null) adImage.setImageBitmap(bmp)
+            } catch (_: Exception) { }
+        }
+
+        // 手动关闭
+        countdown.setOnClickListener { hideSplashAd() }
+
         splashDialog = dialog
         dialog.show()
 
-        // 倒计时从广告图真正绘制的第一帧才开始计，保证看满 5 秒
+        val durationMs = config.durationSec.coerceIn(1, 15) * 1000L
+
+        // 倒计时从广告图真正绘制的第一帧才开始计，保证看满完整秒数
         splashAdCountDown?.cancel()
         adImage.post {
             if (splashDialog !== dialog) return@post
-            splashAdCountDown = object : android.os.CountDownTimer(5000L, 1000L) {
+            splashAdCountDown = object : android.os.CountDownTimer(durationMs, 1000L) {
                 override fun onTick(millisUntilFinished: Long) {
                     val remain = ((millisUntilFinished + 999) / 1000L).toInt()
-                    countdown.text = "${remain}s"
+                    countdown.text = "跳过 ${remain}s"
                 }
 
                 override fun onFinish() {
@@ -184,7 +195,10 @@ class MainActivity : ComponentActivity() {
         openButton = findViewById(R.id.open_button)
         saveButton = findViewById(R.id.save_button)
 
-        showSplashAd()
+        // 开屏广告：本次启动用本地缓存配置，同时后台静默拉取云端最新配置（下次启动生效）
+        val splashConfig = SplashConfigLoader.loadCached(this)
+        showSplashAd(splashConfig)
+        SplashConfigLoader.refreshAsync(this, getConfiguredUrl().ifEmpty { DEFAULT_SERVER_URL })
 
         retryButton.setOnClickListener {
             errorContainer.visibility = View.GONE

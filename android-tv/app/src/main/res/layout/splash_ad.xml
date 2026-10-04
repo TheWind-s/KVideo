@@ -13,8 +13,7 @@
         android:src="@drawable/splash_ad"
         android:contentDescription="开屏广告" />
 
-    <!-- 倒计时指示器：不可点击、不可获焦、不含"跳过"字样，
-         防止梨跳跳等无障碍自动跳广告工具扫描并点击 -->
+    <!-- 跳过按钮：倒计时 + 手动关闭，触摸点击/遥控器确认均可触发 -->
     <TextView
         android:id="@+id/splash_ad_countdown"
         android:layout_width="wrap_content"
@@ -22,13 +21,13 @@
         android:layout_gravity="top|end"
         android:layout_margin="16dp"
         android:background="#66000000"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="7dp"
-        android:text="5s"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp"
+        android:text="跳过 3s"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
-        android:clickable="false"
-        android:focusable="false"
+        android:clickable="true"
+        android:focusable="true"
         android:gravity="center" />
 
     <!-- 版本水印：用于确认设备实际安装的包版本 -->
