@@ -18,7 +18,7 @@ interface DesktopOverlayWrapperProps {
     onToggleMoreMenu: () => void;
     onMoreMenuMouseEnter: () => void;
     onMoreMenuMouseLeave: () => void;
-    onCopyLink: (type?: 'original' | 'proxy') => void;
+    onCopyLink: (type?: 'page' | 'original' | 'proxy') => void;
     seekStepSeconds: number;
     // Speed Menu Props
     playbackRate: number;

@@ -183,8 +183,12 @@ export function useDesktopPlayerLogic({
         skipForward: skipControls.skipForward,
         skipBackward: skipControls.skipBackward,
         changePlaybackSpeed: playbackControls.changePlaybackSpeed,
-        handleCopyLink: (type: 'original' | 'proxy' = 'original') => {
-            const urlToCopy = getCopyUrl(src, type);
+        handleCopyLink: (type: 'page' | 'original' | 'proxy' = 'page') => {
+            // 默认复制当前洋芋影视播放页链接（可分享给好友直接打开本视频）；
+            // 仅高级场景保留第三方原始直链 / 代理直链
+            const urlToCopy = type === 'page'
+                ? (typeof window !== 'undefined' ? window.location.href : src)
+                : getCopyUrl(src, type);
             utilities.handleCopyLink(urlToCopy);
         },
         startSpeedMenuTimeout: controlsVisibility.startSpeedMenuTimeout,

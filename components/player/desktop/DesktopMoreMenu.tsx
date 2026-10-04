@@ -14,7 +14,7 @@ interface DesktopMoreMenuProps {
     onToggleMoreMenu: () => void;
     onMouseEnter: () => void;
     onMouseLeave: () => void;
-    onCopyLink: (type?: 'original' | 'proxy') => void;
+    onCopyLink: (type?: 'page' | 'original' | 'proxy') => void;
     webFullscreenSize: 'full' | 'large' | 'focused';
     onCycleWebFullscreenSize: () => void;
     containerRef: React.RefObject<HTMLDivElement | null>;
@@ -303,32 +303,33 @@ export function DesktopMoreMenu({
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
         >
-            {/* Copy Link Options */}
-            {isProxied ? (
-                <>
+            {/* 复制链接：默认复制本站播放页链接（分享给好友打开仍是洋芋影视） */}
+            <button
+                onClick={() => onCopyLink('page')}
+                className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 group-hover:gap-3 cursor-pointer`}
+            >
+                <Icons.Link size={isRotated ? 14 : 16} className="sm:w-[18px] sm:h-[18px]" />
+                <span>复制链接</span>
+            </button>
+
+            {/* 代理模式下额外提供视频直链，供外部播放器调试使用 */}
+            {isProxied && (
+                <div className="pt-0.5">
                     <button
                         onClick={() => onCopyLink('original')}
-                        className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 group-hover:gap-3 cursor-pointer`}
+                        className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color-secondary)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 cursor-pointer`}
                     >
-                        <Icons.Link size={isRotated ? 14 : 16} className="sm:w-[18px] sm:h-[18px]" />
-                        <span>复制原链接</span>
+                        <Icons.Link size={isRotated ? 13 : 15} className="sm:w-4 sm:h-4" />
+                        <span>复制视频直链</span>
                     </button>
                     <button
                         onClick={() => onCopyLink('proxy')}
-                        className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 mt-0.5 cursor-pointer`}
+                        className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color-secondary)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 mt-0.5 cursor-pointer`}
                     >
-                        <Icons.Link size={isRotated ? 14 : 16} className="sm:w-[18px] sm:h-[18px]" />
-                        <span>复制代理链接</span>
+                        <Icons.Link size={isRotated ? 13 : 15} className="sm:w-4 sm:h-4" />
+                        <span>复制代理直链</span>
                     </button>
-                </>
-            ) : (
-                <button
-                    onClick={() => onCopyLink('original')}
-                    className={`w-full ${isRotated ? 'px-2 py-1.5 text-[11px]' : 'px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm'} text-left text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] rounded-[var(--radius-2xl)] transition-colors flex items-center gap-2 group-hover:gap-3 cursor-pointer`}
-                >
-                    <Icons.Link size={isRotated ? 14 : 16} className="sm:w-[18px] sm:h-[18px]" />
-                    <span>复制链接</span>
-                </button>
+                </div>
             )}
 
             {/* Divider */}
