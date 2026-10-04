@@ -393,10 +393,10 @@ function PlayerContent() {
   }, [playerViewportMode, isSourceSectionCollapsed, isEpisodeSectionCollapsed]);
 
   const playerGridClass = effectivePlayerViewportMode === 'cinema'
-    ? 'xl:grid-cols-[minmax(0,1.9fr)_minmax(280px,0.55fr)]'
+    ? 'xl:grid-cols-[minmax(0,2.1fr)_minmax(280px,0.55fr)]'
     : effectivePlayerViewportMode === 'wide'
-      ? 'xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.72fr)]'
-      : 'xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.9fr)]';
+      ? 'xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,0.72fr)]'
+      : 'xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]';
 
   if (missingRequiredParams) {
     return null;
@@ -405,7 +405,7 @@ function PlayerContent() {
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
       {/* 顶部 Logo/返回导航已移除，返回按钮内嵌在播放器左上角 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 lg:pt-5 pb-20">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent mb-4"></div>
