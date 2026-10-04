@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Share2, Check } from 'lucide-react';
 import { VideoPlayer } from '@/components/player/VideoPlayer';
 import { VideoMetadata } from '@/components/player/VideoMetadata';
 import { EpisodeList } from '@/components/player/EpisodeList';
@@ -293,6 +294,41 @@ function PlayerContent() {
   const playerTimeRef = useRef(0);
   /** 收藏区域：点击文字/空白处等价于点击心形按钮 */
   const favWrapRef = useRef<HTMLDivElement>(null);
+  const [videoShareCopied, setVideoShareCopied] = useState(false);
+
+  /** 分享当前视频播放页：App 内走原生系统分享，浏览器走 Web Share，兜底复制链接 */
+  const handleShareVideo = useCallback(async () => {
+    const url = window.location.href;
+    const videoTitle = videoData?.vod_name || title || '洋芋影视';
+    const shareText = `${videoTitle} - 洋芋影视，点击直接观看\n${url}`;
+
+    if (typeof window.KVideoAndroid?.shareText === 'function') {
+      try {
+        window.KVideoAndroid.shareText(shareText);
+        return;
+      } catch {
+        // 桥异常时走浏览器方案兜底
+      }
+    }
+
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: videoTitle, text: shareText, url });
+        return;
+      } catch {
+        // 用户取消分享
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setVideoShareCopied(true);
+      setTimeout(() => setVideoShareCopied(false), 2000);
+    } catch {
+      window.prompt('复制以下链接分享给好友：', url);
+    }
+  }, [videoData, title]);
 
   useEffect(() => {
     setCurrentSourceId(source);
@@ -504,6 +540,29 @@ function PlayerContent() {
                       收藏
                     </span>
                   </div>
+
+                  {/* 分享当前视频 */}
+                  <div className="relative flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleShareVideo}
+                      aria-label="分享视频"
+                      title="分享视频"
+                      data-focusable
+                      className="flex items-center justify-center p-2 rounded-full bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color-secondary)] hover:text-[var(--accent-color)] hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                    >
+                      {videoShareCopied
+                        ? <Check size={18} className="text-[var(--accent-color)]" />
+                        : <Share2 size={18} />}
+                    </button>
+                    <span className="text-sm text-[var(--text-color-secondary)]">分享</span>
+                    {videoShareCopied && (
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 rounded-lg bg-black/75 text-white text-[11px] whitespace-nowrap z-[3000]">
+                        链接已复制
+                      </span>
+                    )}
+                  </div>
+
                   {/* 播放小贴士 */}
                   <div className="text-[11px] leading-[1.35] text-[var(--text-color-secondary)] text-right space-y-0.5">
                     <p>卡顿请刷新或更换延时低的视频源</p>
