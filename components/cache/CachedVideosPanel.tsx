@@ -4,6 +4,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/ui/Icon';
+import { useRuntimeFeatures } from '@/components/RuntimeFeaturesProvider';
 import {
     CachedVideoJob,
     clearAllJobs,
@@ -57,6 +58,7 @@ function JobProgress({ job }: { job: CachedVideoJob }) {
 
 export function CachedVideosPanel({ open, onClose }: CachedVideosPanelProps) {
     const router = useRouter();
+    const { mediaProxyEnabled } = useRuntimeFeatures();
     const jobs = React.useSyncExternalStore(subscribeJobs, getJobsSnapshot, getJobsSnapshot);
     const [storage, setStorage] = React.useState<StorageInfo>({ quota: 0, usage: 0, persistent: false });
 
@@ -137,9 +139,16 @@ export function CachedVideosPanel({ open, onClose }: CachedVideosPanelProps) {
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                             <Icons.Cloud size={40} className="text-[var(--text-color-secondary)] opacity-40" />
                             <p className="mt-3 text-sm text-[var(--text-color-secondary)]">还没有缓存视频</p>
-                            <p className="mt-1 text-[11px] text-[var(--text-color-secondary)] opacity-80">
-                                播放时点播放器右下角的下载按钮，断网也能看
-                            </p>
+                            {mediaProxyEnabled ? (
+                                <p className="mt-1 text-[11px] text-[var(--text-color-secondary)] opacity-80">
+                                    播放时点播放器右下角的下载按钮，断网也能看
+                                </p>
+                            ) : (
+                                <p className="mt-1 text-[11px] text-amber-600 opacity-90 leading-relaxed px-4">
+                                    当前为托管部署（Cloudflare/Vercel），已禁用媒体代理，缓存功能不可用。<br/>
+                                    改用 Docker 或 Node.js 自托管部署后即可启用。
+                                </p>
+                            )}
                         </div>
                     ) : (
                         <ul className="space-y-1.5">

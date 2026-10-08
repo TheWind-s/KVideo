@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Icons } from '@/components/ui/Icon';
+import { useRuntimeFeatures } from '@/components/RuntimeFeaturesProvider';
 import {
     CachedVideoJob,
     deleteJob,
@@ -43,6 +44,7 @@ export function CacheVideoButton({
     const tipTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const prevStatusRef = React.useRef<string>('');
 
+    const { mediaProxyEnabled } = useRuntimeFeatures();
     const jobs = React.useSyncExternalStore(subscribeJobs, getJobsSnapshot, getJobsSnapshot);
     const job: CachedVideoJob | undefined = React.useMemo(
         () => (key ? jobs.find((item) => item.key === key) : undefined),
@@ -122,6 +124,28 @@ export function CacheVideoButton({
     }, [job, showTip]);
 
     if (!ready || !playUrl) return null;
+
+    // 合规部署（Cloudflare/Vercel）禁用了 /api/proxy，跨域 m3u8 无法获取，缓存功能不可用
+    if (!mediaProxyEnabled) {
+        return (
+            <div className="relative shrink-0">
+                <button
+                    type="button"
+                    disabled
+                    aria-label="缓存功能仅在自托管部署可用"
+                    title="缓存功能仅在自托管部署可用"
+                    className="btn-icon relative opacity-40 cursor-not-allowed"
+                >
+                    <Icons.Download size={20} className="text-white/60" />
+                </button>
+                {tip && (
+                    <span className="absolute bottom-full right-0 mb-2 px-2.5 py-1 rounded-lg bg-black/85 text-white text-[11px] whitespace-nowrap z-[3000] pointer-events-none">
+                        {tip}
+                    </span>
+                )}
+            </div>
+        );
+    }
 
     const status = job?.status;
     const total = job?.totalBytes || 0;
