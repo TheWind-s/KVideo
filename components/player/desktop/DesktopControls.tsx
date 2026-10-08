@@ -1,7 +1,7 @@
 import React from 'react';
 import { DesktopProgressBar } from './DesktopProgressBar';
 import { DesktopLeftControls } from './DesktopLeftControls';
-import { DesktopRightControls } from './DesktopRightControls';
+import { DesktopRightControls, PlayerCacheMeta } from './DesktopRightControls';
 
 interface DesktopControlsProps {
     showControls: boolean;
@@ -21,6 +21,7 @@ interface DesktopControlsProps {
     isAirPlaySupported: boolean;
     isCastAvailable: boolean;
     isProxied?: boolean;
+    cacheMeta?: PlayerCacheMeta;
     progressBarRef: React.RefObject<HTMLDivElement | null>;
     volumeBarRef: React.RefObject<HTMLDivElement | null>;
     onTogglePlay: () => void;

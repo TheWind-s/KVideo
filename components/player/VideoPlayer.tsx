@@ -228,6 +228,14 @@ export function VideoPlayer({
           episodeName={episodeName}
           isPremium={isPremium}
           onResolutionDetected={onResolutionDetected}
+          cacheMeta={{
+            playUrl,
+            videoId: videoId || '',
+            source,
+            title: videoTitle || title,
+            episodeIndex: currentEpisode,
+            episodeName: episodeName || `第 ${currentEpisode + 1} 集`,
+          }}
         />
       )}
     </div>
