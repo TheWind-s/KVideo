@@ -7,6 +7,7 @@ import { useHlsPlayer } from './hooks/useHlsPlayer';
 import { useAutoSkip } from './hooks/useAutoSkip';
 import { useStallDetection } from './hooks/useStallDetection';
 import { useVideoResolution } from './hooks/useVideoResolution';
+import { useMediaSession } from './hooks/useMediaSession';
 import { DesktopControlsWrapper } from './desktop/DesktopControlsWrapper';
 import { PlayerCacheMeta } from './desktop/DesktopRightControls';
 import { DesktopOverlayWrapper } from './desktop/DesktopOverlayWrapper';
@@ -280,6 +281,16 @@ export function DesktopVideoPlayer({
     isDraggingProgressRef: refs.isDraggingProgressRef,
     setIsLoading: actions.setIsLoading,
     isTransitioningToNextEpisode
+  });
+
+  // MediaSession：让 Android 系统媒体通知显示投屏按钮（走系统 MediaRouter）
+  useMediaSession({
+    videoRef: refs.videoRef,
+    title: videoTitle || '未知视频',
+    episodeName,
+    episodeIndex: currentEpisodeIndex,
+    totalEpisodes,
+    onNextEpisode,
   });
 
   const {
