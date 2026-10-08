@@ -1,15 +1,5 @@
 import React from 'react';
 import { Icons } from '@/components/ui/Icon';
-import { CacheVideoButton } from '../CacheVideoButton';
-
-export interface PlayerCacheMeta {
-    playUrl: string;
-    videoId: string;
-    source: string;
-    title: string;
-    episodeIndex: number;
-    episodeName: string;
-}
 
 interface DesktopRightControlsProps {
     isNativeFullscreen: boolean;
@@ -17,7 +7,6 @@ interface DesktopRightControlsProps {
     isPiPSupported: boolean;
     isAirPlaySupported: boolean;
     isCastAvailable: boolean;
-    cacheMeta?: PlayerCacheMeta;
     onToggleNativeFullscreen: () => void;
     onToggleWebFullscreen: () => void;
     onTogglePictureInPicture: () => void;
@@ -31,7 +20,6 @@ export function DesktopRightControls({
     isPiPSupported,
     isAirPlaySupported,
     isCastAvailable,
-    cacheMeta,
     onToggleNativeFullscreen,
     onToggleWebFullscreen,
     onTogglePictureInPicture,
@@ -40,18 +28,6 @@ export function DesktopRightControls({
 }: DesktopRightControlsProps) {
     return (
         <div className="player-controls-right relative z-50 flex shrink-0 items-center gap-3">
-            {/* 缓存本集（离线观看） */}
-            {cacheMeta && cacheMeta.playUrl && (
-                <CacheVideoButton
-                    playUrl={cacheMeta.playUrl}
-                    videoId={cacheMeta.videoId}
-                    source={cacheMeta.source}
-                    title={cacheMeta.title}
-                    episodeIndex={cacheMeta.episodeIndex}
-                    episodeName={cacheMeta.episodeName}
-                />
-            )}
-
             {/* Picture-in-Picture */}
             {
                 isPiPSupported && (

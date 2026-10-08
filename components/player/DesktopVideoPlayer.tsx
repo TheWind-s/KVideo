@@ -9,7 +9,6 @@ import { useStallDetection } from './hooks/useStallDetection';
 import { useVideoResolution } from './hooks/useVideoResolution';
 import { useMediaSession } from './hooks/useMediaSession';
 import { DesktopControlsWrapper } from './desktop/DesktopControlsWrapper';
-import { PlayerCacheMeta } from './desktop/DesktopRightControls';
 import { DesktopOverlayWrapper } from './desktop/DesktopOverlayWrapper';
 import { DanmakuCanvas } from './DanmakuCanvas';
 import { usePlayerSettings } from './hooks/usePlayerSettings';
@@ -74,8 +73,6 @@ interface DesktopVideoPlayerProps {
   isPremium?: boolean;
   // Resolution callback
   onResolutionDetected?: (info: import('./hooks/useVideoResolution').VideoResolutionInfo) => void;
-  // 视频缓存按钮所需元信息
-  cacheMeta?: PlayerCacheMeta;
 }
 
 export function DesktopVideoPlayer({
@@ -93,7 +90,6 @@ export function DesktopVideoPlayer({
   episodeName = '',
   isPremium = false,
   onResolutionDetected,
-  cacheMeta,
 }: DesktopVideoPlayerProps) {
   const { refs, data, actions } = useDesktopPlayerState();
   const { fullscreenType: settingsFullscreenType } = usePlayerSettings(isPremium);
@@ -475,7 +471,6 @@ export function DesktopVideoPlayer({
               data={data}
               logic={logic}
               refs={refs}
-              cacheMeta={cacheMeta}
             />
           </div>
         </div>

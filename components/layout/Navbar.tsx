@@ -11,7 +11,6 @@ import { useRuntimeFeatures } from '@/components/RuntimeFeaturesProvider';
 import { ApkDownloadButton } from '@/components/layout/ApkDownloadButton';
 import { LogOut } from 'lucide-react';
 import { ShareButton } from '@/components/layout/ShareButton';
-import { NavCacheButton } from '@/components/layout/NavCacheButton';
 
 interface NavbarProps {
     onReset: () => void;
@@ -76,9 +75,6 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
 
                             {/* 分享按钮 */}
                             <ShareButton />
-
-                            {/* 我的缓存（离线观看） */}
-                            <NavCacheButton />
 
                             {/* IPTV Link - only show if user has iptv_access or no auth configured */}
                             {iptvEnabled && hasPermission('iptv_access') && (

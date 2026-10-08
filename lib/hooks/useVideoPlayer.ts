@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { settingsStore } from '@/lib/store/settings-store';
-import { findPlayableJob } from '@/lib/cache/video-cache';
 
 interface VideoData {
   vod_id: string;
@@ -66,28 +65,6 @@ export function useVideoPlayer(
   const fetchVideoDetails = useCallback(async () => {
     if (!videoId || !source) return;
 
-    // 网络失败/源不可用时，尝试用本机缓存恢复（离线观看已缓存的剧集）
-    const recoverFromCache = async (): Promise<boolean> => {
-      try {
-        const parsedIdx = episodeParamRef.current ? parseInt(episodeParamRef.current, 10) : NaN;
-        const job = (await findPlayableJob(source, videoId, Number.isNaN(parsedIdx) ? undefined : parsedIdx))
-          || (await findPlayableJob(source, videoId));
-        if (!job) return false;
-        setVideoError('');
-        setVideoData({
-          vod_id: videoId,
-          vod_name: job.title,
-          episodes: [{ name: job.episodeName, url: job.playUrl }],
-        });
-        setCurrentEpisode(job.episodeIndex);
-        setPlayUrl(job.playUrl);
-        setLoading(false);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
     try {
       // Don't clear error immediately if we are just retrying silently, 
       // but for manual retry or initial load we should.
@@ -124,7 +101,6 @@ export function useVideoPlayer(
 
       if (!response.ok) {
         if (sourceUnavailable) {
-          if (await recoverFromCache()) return;
           setVideoError(data.error || '该视频源不可用。请返回并尝试其他来源。');
           setLoading(false);
           onSourceUnavailableRef.current?.();
@@ -157,8 +133,6 @@ export function useVideoPlayer(
       }
     } catch (error) {
       console.error('Failed to fetch video details:', error);
-      // 网络异常（断网/DNS 失败/超时）时，尝试恢复本机缓存
-      if (await recoverFromCache()) return;
       setVideoError(error instanceof Error ? error.message : '加载视频详情失败。');
       setLoading(false);
     }

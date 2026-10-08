@@ -1,8 +1,6 @@
 'use client';
 
 import { DesktopVideoPlayer } from './DesktopVideoPlayer';
-import { PlayerCacheMeta } from './desktop/DesktopRightControls';
-
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -22,8 +20,6 @@ interface CustomVideoPlayerProps {
   isPremium?: boolean;
   // Resolution callback
   onResolutionDetected?: (info: import('./hooks/useVideoResolution').VideoResolutionInfo) => void;
-  // 视频缓存按钮元信息
-  cacheMeta?: PlayerCacheMeta;
 }
 
 /**

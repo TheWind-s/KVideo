@@ -1,6 +1,5 @@
 import React from 'react';
 import { DesktopControls } from './DesktopControls';
-import { PlayerCacheMeta } from './DesktopRightControls';
 import { useDesktopPlayerState } from '../hooks/useDesktopPlayerState';
 import { useDesktopPlayerLogic } from '../hooks/useDesktopPlayerLogic';
 
@@ -9,10 +8,9 @@ interface DesktopControlsWrapperProps {
     data: ReturnType<typeof useDesktopPlayerState>['data'];
     logic: ReturnType<typeof useDesktopPlayerLogic>;
     refs: ReturnType<typeof useDesktopPlayerState>['refs'];
-    cacheMeta?: PlayerCacheMeta;
 }
 
-export function DesktopControlsWrapper({ src, data, logic, refs, cacheMeta }: DesktopControlsWrapperProps) {
+export function DesktopControlsWrapper({ src, data, logic, refs }: DesktopControlsWrapperProps) {
     const {
         isPlaying,
         currentTime,
@@ -70,7 +68,6 @@ export function DesktopControlsWrapper({ src, data, logic, refs, cacheMeta }: De
             isAirPlaySupported={isAirPlaySupported}
             isCastAvailable={isCastAvailable}
             isProxied={isProxied}
-            cacheMeta={cacheMeta}
             progressBarRef={progressBarRef}
             volumeBarRef={volumeBarRef}
             onTogglePlay={togglePlay}
