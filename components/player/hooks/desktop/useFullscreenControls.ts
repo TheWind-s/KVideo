@@ -133,7 +133,18 @@ export function useFullscreenControls({
 }: UseFullscreenControlsProps) {
     const androidPiPSessionRef = useRef<AndroidPiPSessionState | null>(null);
 
+    // WebView（安卓 App 壳）不支持 screen.orientation.lock，
+    // 全屏转横需走原生桥（SENSOR_LANDSCAPE：横左/横右跟随传感器，不倒立）；
+    // 普通浏览器仍走标准 Orientation Lock API。
     const lockLandscape = useCallback(async () => {
+        if (window.KVideoAndroid?.setOrientation) {
+            try {
+                window.KVideoAndroid.setOrientation('landscape');
+                return;
+            } catch {
+                // fall through to web API
+            }
+        }
         const orientation = (window.screen as OrientationCapableScreen).orientation;
         if (orientation?.lock) {
             try {
@@ -145,6 +156,14 @@ export function useFullscreenControls({
     }, []);
 
     const unlockOrientation = useCallback(() => {
+        if (window.KVideoAndroid?.setOrientation) {
+            try {
+                window.KVideoAndroid.setOrientation('reset');
+                return;
+            } catch {
+                // fall through to web API
+            }
+        }
         const orientation = (window.screen as OrientationCapableScreen).orientation;
         if (orientation?.unlock) {
             try {

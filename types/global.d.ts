@@ -13,6 +13,12 @@ interface KVideoAndroidBridge {
   mediaUpdate?: (json: string) => void;
   /** 原生媒体通知栏：离开播放页 / 停止播放时取消通知 */
   mediaStop?: () => void;
+  /**
+   * 原生屏幕方向控制（WebView 不支持 screen.orientation.lock）：
+   * "landscape" → 视频全屏强制横屏（横左/横右跟随传感器，不倒立）；
+   * "reset" → 退出全屏，交还系统设置
+   */
+  setOrientation?: (mode: 'landscape' | 'reset') => void;
 }
 
 declare global {
