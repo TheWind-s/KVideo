@@ -53,8 +53,8 @@ export async function GET(request: Request) {
 
     const headers = new Headers(upstream.headers);
     headers.set('Content-Type', 'application/vnd.android.package-archive');
-    // ASCII 文件名兜底 + RFC 5987 中文文件名（洋芋影视.apk）
-    const cnName = encodeURIComponent('洋芋影视') + '.apk';
+    // ASCII 文件名兜底 + RFC 5987 中文文件名（洋芋影视1.0.12.apk，随版本号变化）
+    const cnName = encodeURIComponent(`洋芋影视${version}`) + '.apk';
     headers.set(
       'Content-Disposition',
       `attachment; filename="yangyuyingshi-${version}.apk"; filename*=UTF-8''${cnName}`,

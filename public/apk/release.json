@@ -1,9 +1,11 @@
 {
-  "versionName": "1.0.11",
-  "versionCode": 12,
-  "url": "/api/apk/download?v=1.0.11",
-  "publishedAt": "2026-10-04",
+  "versionName": "1.0.12",
+  "versionCode": 13,
+  "url": "/api/apk/download?v=1.0.12",
+  "publishedAt": "2026-10-16",
   "notes": [
-    "开屏广告增加了手动关闭功能"
+    "新增电视投屏：播放页可投到电视/盒子观看，换集自动跟随",
+    "修复屏幕旋转：尊重系统锁定不再乱转，全屏自动转横屏",
+    "优化进出全屏过渡，画面不再跳动"
   ]
 }

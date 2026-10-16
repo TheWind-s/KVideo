@@ -88,7 +88,7 @@ export function ApkDownloadButton() {
 
   const apkUrl = manifest
     ? new URL(manifest.url, window.location.origin).toString()
-    : `${window.location.origin}/api/apk/download?v=1.0.10`;
+    : `${window.location.origin}/api/apk/download?v=1.0.12`;
   const notesText = manifest?.notes?.length ? `\n\n${manifest.notes.map((n) => `· ${n}`).join('\n')}` : '';
 
   // 浏览器：普通下载链接；旧版 App 壳（无桥 WebView）则提示改用系统浏览器下载
@@ -97,7 +97,7 @@ export function ApkDownloadButton() {
       <span className="relative inline-flex">
         <a
           href={apkUrl}
-          download="洋芋影视.apk"
+          download="洋芋影视1.0.12.apk"
           title="下载洋芋影视 Android 安装包"
           data-focusable
           onClick={(e) => {
