@@ -67,6 +67,40 @@ function waitForAnimationFrame(): Promise<void> {
     });
 }
 
+// ---------- 全屏过渡黑幕 ----------
+// window 全屏切换时布局瞬时跳变 + 屏幕旋转叠加，视觉生硬；
+// 用一层黑色遮罩快速淡入 → 停顿 → 淡出，把跳变完全遮住，
+// 只留下优雅的暗场过渡（与安卓壳处理 bfcache 白闪的方案同思路）。
+let curtainEl: HTMLDivElement | null = null;
+let curtainHideTimer: ReturnType<typeof setTimeout> | null = null;
+
+function playFullscreenCurtain(holdMs = 200) {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (curtainHideTimer) {
+        clearTimeout(curtainHideTimer);
+        curtainHideTimer = null;
+    }
+    if (!curtainEl) {
+        curtainEl = document.createElement('div');
+        curtainEl.setAttribute('aria-hidden', 'true');
+        // pointer-events:none 不挡交互；z-index 5000 压过播放器与控制层
+        curtainEl.style.cssText =
+            'position:fixed;inset:0;background:#000;pointer-events:none;opacity:0;'
+            + 'z-index:5000;transition:opacity 80ms ease-out;will-change:opacity;';
+        document.body.appendChild(curtainEl);
+    }
+    const el = curtainEl;
+    // 强制回流后淡入，确保 transition 生效
+    void el.offsetWidth;
+    el.style.transitionDuration = '80ms';
+    el.style.opacity = '1';
+    curtainHideTimer = setTimeout(() => {
+        curtainHideTimer = null;
+        el.style.transitionDuration = '240ms';
+        el.style.opacity = '0';
+    }, 80 + holdMs);
+}
+
 async function waitForWindowFullscreenLayout(): Promise<void> {
     await waitForAnimationFrame();
     await waitForAnimationFrame();
@@ -181,12 +215,15 @@ export function useFullscreenControls({
     }, [setFullscreenMode, setIsFullscreen, unlockOrientation]);
 
     const exitWindowFullscreen = useCallback(() => {
+        playFullscreenCurtain();
         unlockOrientation();
         setIsFullscreen(false);
         setFullscreenMode('none');
     }, [setFullscreenMode, setIsFullscreen, unlockOrientation]);
 
     const enterWindowFullscreen = useCallback(async () => {
+        playFullscreenCurtain();
+
         if (fullscreenMode === 'native') {
             await exitNativeFullscreen();
         }

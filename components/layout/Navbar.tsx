@@ -9,6 +9,7 @@ import { siteConfig } from '@/lib/config/site-config';
 import { getSession, clearSession, hasPermission, type AuthSession } from '@/lib/store/auth-store';
 import { useRuntimeFeatures } from '@/components/RuntimeFeaturesProvider';
 import { ApkDownloadButton } from '@/components/layout/ApkDownloadButton';
+import { ContactUsButton } from '@/components/layout/ContactUsButton';
 import { LogOut } from 'lucide-react';
 import { ShareButton } from '@/components/layout/ShareButton';
 
@@ -72,6 +73,9 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                             {/* APK 下载 / 更新入口（浏览器显示下载，App 内检测新版显示更新） */}
                             <ApkDownloadButton />
+
+                            {/* 联系我们（点击弹出联系图片） */}
+                            <ContactUsButton />
 
                             {/* 分享按钮 */}
                             <ShareButton />
