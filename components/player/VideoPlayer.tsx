@@ -26,6 +26,8 @@ interface VideoPlayerProps {
   externalTimeRef?: React.MutableRefObject<number>;
   // Resolution callback
   onResolutionDetected?: (info: import('./hooks/useVideoResolution').VideoResolutionInfo) => void;
+  /** 视频首次真正开始播放（playing 事件）时回调 */
+  onPlaybackStarted?: () => void;
 }
 
 export function VideoPlayer({
@@ -41,6 +43,7 @@ export function VideoPlayer({
   episodeName,
   externalTimeRef,
   onResolutionDetected,
+  onPlaybackStarted,
 }: VideoPlayerProps) {
   const [videoError, setVideoError] = useState<string>('');
   const [useProxy, setUseProxy] = useState(false);
@@ -228,6 +231,7 @@ export function VideoPlayer({
           episodeName={episodeName}
           isPremium={isPremium}
           onResolutionDetected={onResolutionDetected}
+          onPlaybackStarted={onPlaybackStarted}
         />
       )}
     </div>

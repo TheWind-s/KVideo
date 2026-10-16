@@ -73,6 +73,8 @@ interface DesktopVideoPlayerProps {
   isPremium?: boolean;
   // Resolution callback
   onResolutionDetected?: (info: import('./hooks/useVideoResolution').VideoResolutionInfo) => void;
+  /** 视频首次真正开始播放（playing 事件）时回调，用于源测速自动切换判断 */
+  onPlaybackStarted?: () => void;
 }
 
 export function DesktopVideoPlayer({
@@ -90,6 +92,7 @@ export function DesktopVideoPlayer({
   episodeName = '',
   isPremium = false,
   onResolutionDetected,
+  onPlaybackStarted,
 }: DesktopVideoPlayerProps) {
   const { refs, data, actions } = useDesktopPlayerState();
   const { fullscreenType: settingsFullscreenType } = usePlayerSettings(isPremium);
@@ -113,6 +116,16 @@ export function DesktopVideoPlayer({
       onResolutionDetected(videoResolution);
     }
   }, [videoResolution, onResolutionDetected]);
+
+  // 视频首次真正开始播放时通知父级（源测速自动切换用）
+  React.useEffect(() => {
+    const video = refs.videoRef.current;
+    if (!video || !onPlaybackStarted) return;
+    const handler = () => onPlaybackStarted();
+    video.addEventListener('playing', handler, { once: true });
+    return () => video.removeEventListener('playing', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onPlaybackStarted, src]);
 
   // Danmaku
   const { danmakuEnabled, comments: danmakuComments } = useDanmaku({

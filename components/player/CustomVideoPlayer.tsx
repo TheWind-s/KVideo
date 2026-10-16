@@ -20,6 +20,8 @@ interface CustomVideoPlayerProps {
   isPremium?: boolean;
   // Resolution callback
   onResolutionDetected?: (info: import('./hooks/useVideoResolution').VideoResolutionInfo) => void;
+  /** 视频首次真正开始播放（playing 事件）时回调 */
+  onPlaybackStarted?: () => void;
 }
 
 /**

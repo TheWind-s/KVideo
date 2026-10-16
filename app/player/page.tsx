@@ -13,6 +13,7 @@ import type { VideoResolutionInfo } from '@/components/player/hooks/useVideoReso
 import { useResolutionProbe } from '@/lib/hooks/useResolutionProbe';
 import { setCachedResolution } from '@/lib/player/resolution-cache';
 import { useVideoPlayer } from '@/lib/hooks/useVideoPlayer';
+import { useSourceSpeedTest } from '@/lib/hooks/useSourceSpeedTest';
 import { useHistory } from '@/lib/store/history-store';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
@@ -292,6 +293,73 @@ function PlayerContent() {
   // Track current source for switching
   const [currentSourceId, setCurrentSourceId] = useState(source);
   const playerTimeRef = useRef(0);
+
+  /** 统一换源入口：换 id/source，保留集数与播放进度（手动切换与自动切换共用） */
+  const switchToSource = useCallback((newSource: SourceInfo) => {
+    const params = new URLSearchParams();
+    params.set('id', String(newSource.id));
+    params.set('source', newSource.source);
+    params.set('title', title || '');
+    // Preserve current episode index
+    params.set('episode', currentEpisode.toString());
+    // Preserve playback position for seamless source switch
+    if (playerTimeRef.current > 1) {
+      params.set('t', Math.floor(playerTimeRef.current).toString());
+    }
+    // Store all known sources using short gs key
+    const allSources = groupedSources.length > 0 ? groupedSources : [];
+    if (allSources.length > 1) {
+      const newKey = storeGroupedSources(allSources);
+      if (newKey) params.set('gs', newKey);
+    } else if (gsKey) {
+      params.set('gs', gsKey);
+    }
+    if (isPremium) {
+      params.set('premium', '1');
+    }
+    setCurrentSourceId(newSource.source);
+    router.replace(`/player?${params.toString()}`, { scroll: false });
+  }, [currentEpisode, groupedSources, gsKey, isPremium, router, title]);
+
+  // ---- 源测速自动切换（方案A）：视频迟迟未起播时，实测各源 CDN 速度，自动切到明显更快的源 ----
+  const [playbackStarted, setPlaybackStarted] = useState(false);
+  const handlePlaybackStarted = useCallback(() => setPlaybackStarted(true), []);
+  const [slowStart, setSlowStart] = useState(false);
+  const [autoSwitchedFrom, setAutoSwitchedFrom] = useState('');
+
+  useEffect(() => {
+    setPlaybackStarted(false);
+    setSlowStart(false);
+  }, [source, videoId, currentEpisode]);
+
+  // 换片时清自动换源提示（仅换源时保留，供 loading spinner 展示）
+  useEffect(() => {
+    setAutoSwitchedFrom('');
+  }, [videoId]);
+
+  useEffect(() => {
+    if (!playUrl || playbackStarted) {
+      setSlowStart(false);
+      return;
+    }
+    // 给当前源 2.5s 公平起播窗口，超时才启动测速
+    const timer = setTimeout(() => setSlowStart(true), 2500);
+    return () => clearTimeout(timer);
+  }, [playUrl, playbackStarted]);
+
+  useSourceSpeedTest({
+    enabled: slowStart && !playbackStarted && !loading && !!videoId,
+    currentSource: source || '',
+    currentVideoId: videoId || '',
+    currentPlayUrl: playUrl,
+    episodeIndex: currentEpisode,
+    candidates: groupedSources,
+    onAutoSwitch: (best) => {
+      setAutoSwitchedFrom(getSourceName(source || '') || source || '');
+      switchToSource(best);
+    },
+  });
+
   /** 收藏区域：点击文字/空白处等价于点击心形按钮 */
   const favWrapRef = useRef<HTMLDivElement>(null);
   const [videoShareCopied, setVideoShareCopied] = useState(false);
@@ -449,6 +517,11 @@ function PlayerContent() {
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent mb-4"></div>
             <p className="text-[var(--text-color-secondary)]">正在加载视频详情...</p>
+            {autoSwitchedFrom && (
+              <p className="mt-2 text-xs text-[var(--text-color-secondary)]">
+                已自动切换到更快的视频源（原{autoSwitchedFrom}较慢）
+              </p>
+            )}
           </div>
         ) : videoError && !videoData ? (
           <PlayerError
@@ -498,6 +571,7 @@ function PlayerContent() {
                   episodeName={videoData?.episodes?.[currentEpisode]?.name || ''}
                   externalTimeRef={playerTimeRef}
                   onResolutionDetected={handleResolutionDetected}
+                  onPlaybackStarted={handlePlaybackStarted}
                 />
               </div>
               <div className="hidden lg:block">
@@ -612,31 +686,7 @@ function PlayerContent() {
                     onSourceSectionCollapseChange={setIsSourceSectionCollapsed}
                     episodeSectionCollapsed={isEpisodeSectionCollapsed}
                     onEpisodeSectionCollapseChange={setIsEpisodeSectionCollapsed}
-                    onSourceChange={(newSource) => {
-                      const params = new URLSearchParams();
-                      params.set('id', String(newSource.id));
-                      params.set('source', newSource.source);
-                      params.set('title', title || '');
-                      // Preserve current episode index
-                      params.set('episode', currentEpisode.toString());
-                      // Preserve playback position for seamless source switch
-                      if (playerTimeRef.current > 1) {
-                        params.set('t', Math.floor(playerTimeRef.current).toString());
-                      }
-                      // Store all known sources using short gs key
-                      const allSources = groupedSources.length > 0 ? groupedSources : [];
-                      if (allSources.length > 1) {
-                        const newKey = storeGroupedSources(allSources);
-                        if (newKey) params.set('gs', newKey);
-                      } else if (gsKey) {
-                        params.set('gs', gsKey);
-                      }
-                      if (isPremium) {
-                        params.set('premium', '1');
-                      }
-                      setCurrentSourceId(newSource.source);
-                      router.replace(`/player?${params.toString()}`, { scroll: false });
-                    }}
+                    onSourceChange={switchToSource}
                   />
                 </div>
               </div>
