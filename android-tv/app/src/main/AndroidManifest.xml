@@ -5,6 +5,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 应用内下载更新 APK 后拉起系统安装器 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 13+ 显示媒体通知栏（锁屏/下拉媒体卡片） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- DLNA 投屏：SSDP 组播发现局域网电视（需组播锁） -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <uses-feature
         android:name="android.software.leanback"
@@ -30,7 +35,7 @@
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:exported="true"
-            android:screenOrientation="fullSensor"
+            android:screenOrientation="user"
             android:supportsPictureInPicture="true"
             android:windowSoftInputMode="adjustResize">
 

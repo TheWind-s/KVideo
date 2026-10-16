@@ -2,10 +2,14 @@ package com.kvideo.tv
 
 import android.annotation.SuppressLint
 import android.app.DownloadManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.database.Cursor
@@ -14,6 +18,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.util.Rational
 import android.view.KeyEvent
@@ -37,6 +44,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.addCallback
+import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat as MediaStyleNotificationCompat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -51,6 +60,15 @@ class MainActivity : ComponentActivity() {
 
         // Fixed server endpoint; users cannot change it in the app.
         private const val DEFAULT_SERVER_URL = "https://kvideo-d38.pages.dev"
+
+        // 系统媒体通知栏（WebView 页面视频）：通知渠道 / 通知 id / 按钮广播 action
+        private const val MEDIA_CHANNEL_ID = "kvideo_media_playback"
+        private const val MEDIA_NOTIFICATION_ID = 2001
+        private const val ACTION_MEDIA_PLAY = "com.kvideo.tv.media.PLAY"
+        private const val ACTION_MEDIA_PAUSE = "com.kvideo.tv.media.PAUSE"
+        private const val ACTION_MEDIA_NEXT = "com.kvideo.tv.media.NEXT"
+        private const val ACTION_MEDIA_PREV = "com.kvideo.tv.media.PREV"
+        private const val ACTION_MEDIA_STOP = "com.kvideo.tv.media.STOP"
 
         // Applied at the very start of every navigation: forces the light theme
         // and paints the light-green base frame, eliminating the dark frame the
@@ -92,6 +110,12 @@ class MainActivity : ComponentActivity() {
     // APK 自更新：DownloadManager 任务 id 与完成广播接收器
     private var enqueuedApkDownloadId = -1L
     private var downloadCompleteReceiver: BroadcastReceiver? = null
+
+    // 系统媒体通知栏：MediaSession 与按钮广播接收器（首次播放时懒创建）
+    private var mediaSession: MediaSessionCompat? = null
+    private var mediaReceiver: BroadcastReceiver? = null
+    private var mediaNotificationShown = false
+    private var mediaPermissionRequested = false
 
     private val hideBackOverlayRunnable = Runnable {
         if (!::backOverlay.isInitialized) return@Runnable
@@ -428,6 +452,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        DlnaManager.releaseMulticastLock()
         splashAdCountDown?.cancel()
         splashAdCountDown = null
         splashDialog?.dismiss()
@@ -441,6 +466,16 @@ class MainActivity : ComponentActivity() {
             }
         }
         downloadCompleteReceiver = null
+        mediaReceiver?.let {
+            try {
+                unregisterReceiver(it)
+            } catch (_: Throwable) { }
+        }
+        mediaReceiver = null
+        try {
+            mediaSession?.release()
+        } catch (_: Throwable) { }
+        mediaSession = null
         webView.destroy()
         super.onDestroy()
     }
@@ -616,6 +651,234 @@ class MainActivity : ComponentActivity() {
     }
 
     // ------------------------------------------------------------------
+    // 系统媒体通知栏：由网页 JS 桥（KVideoAndroid.mediaUpdate/mediaStop）驱动，
+    // 通知按钮 / 锁屏控件 / 耳机媒体键 → MediaSession.Callback / 广播 →
+    // evaluateJavascript 调回网页 window.__kvideoMediaCommand
+    // ------------------------------------------------------------------
+
+    /** 懒创建：通知渠道 + MediaSession + 按钮广播接收器 +（Android 13+）请求通知权限 */
+    private fun ensureMediaSession() {
+        if (mediaSession != null) return
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !mediaPermissionRequested &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            mediaPermissionRequested = true
+            try {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 2001)
+            } catch (error: Throwable) {
+                Log.w(TAG, "request POST_NOTIFICATIONS failed", error)
+            }
+        }
+
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.createNotificationChannel(
+            NotificationChannel(
+                MEDIA_CHANNEL_ID,
+                "视频播放控制",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply { setShowBadge(false) }
+        )
+
+        val session = MediaSessionCompat(this, "KVideoMedia").apply {
+            setCallback(object : MediaSessionCompat.Callback() {
+                override fun onPlay() = dispatchMediaCommandToJs("play")
+                override fun onPause() = dispatchMediaCommandToJs("pause")
+                override fun onSkipToNext() = dispatchMediaCommandToJs("next")
+                override fun onSkipToPrevious() = dispatchMediaCommandToJs("prev")
+                override fun onStop() = dispatchMediaCommandToJs("stop")
+                override fun onSeekTo(pos: Long) = dispatchMediaCommandToJs("seekto", pos / 1000L)
+            })
+            isActive = true
+        }
+        mediaSession = session
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                when (intent?.action) {
+                    ACTION_MEDIA_PLAY -> dispatchMediaCommandToJs("play")
+                    ACTION_MEDIA_PAUSE -> dispatchMediaCommandToJs("pause")
+                    ACTION_MEDIA_NEXT -> dispatchMediaCommandToJs("next")
+                    ACTION_MEDIA_PREV -> dispatchMediaCommandToJs("prev")
+                    ACTION_MEDIA_STOP -> dispatchMediaCommandToJs("stop")
+                }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(ACTION_MEDIA_PLAY)
+            addAction(ACTION_MEDIA_PAUSE)
+            addAction(ACTION_MEDIA_NEXT)
+            addAction(ACTION_MEDIA_PREV)
+            addAction(ACTION_MEDIA_STOP)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(receiver, filter)
+        }
+        mediaReceiver = receiver
+    }
+
+    /** 网页上报播放状态：更新 MediaSession 元数据 / 进度，并刷新媒体通知 */
+    private fun updateMediaSession(json: String) {
+        runOnUiThread {
+            try {
+                ensureMediaSession()
+                val session = mediaSession ?: return@runOnUiThread
+                val data = org.json.JSONObject(json)
+                val isPlaying = data.optBoolean("isPlaying", false)
+                val title = data.optString("title", "洋芋影视")
+                val artist = data.optString("artist", "")
+                val album = data.optString("album", "洋芋影视")
+                val positionMs = data.optLong("position", 0L).coerceAtLeast(0L)
+                val durationMs = data.optLong("duration", 0L).coerceAtLeast(0L)
+                val canNext = data.optBoolean("canNext", false)
+                val canPrev = data.optBoolean("canPrev", false)
+
+                session.setMetadata(
+                    MediaMetadataCompat.Builder()
+                        .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, durationMs)
+                        .build()
+                )
+                session.setPlaybackState(
+                    PlaybackStateCompat.Builder()
+                        .setActions(
+                            PlaybackStateCompat.ACTION_PLAY
+                                or PlaybackStateCompat.ACTION_PAUSE
+                                or PlaybackStateCompat.ACTION_PLAY_PAUSE
+                                or PlaybackStateCompat.ACTION_SEEK_TO
+                                or PlaybackStateCompat.ACTION_STOP
+                                or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                                or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                        )
+                        .setState(
+                            if (isPlaying) PlaybackStateCompat.STATE_PLAYING
+                            else PlaybackStateCompat.STATE_PAUSED,
+                            positionMs,
+                            if (isPlaying) 1f else 0f
+                        )
+                        .build()
+                )
+
+                showMediaNotification(session, isPlaying, title, artist, canNext, canPrev)
+            } catch (error: Throwable) {
+                Log.w(TAG, "mediaUpdate failed", error)
+            }
+        }
+    }
+
+    private fun showMediaNotification(
+        session: MediaSessionCompat,
+        isPlaying: Boolean,
+        title: String,
+        artist: String,
+        canNext: Boolean,
+        canPrev: Boolean
+    ) {
+        try {
+            fun mediaAction(action: String, icon: Int, label: String): NotificationCompat.Action =
+                NotificationCompat.Action.Builder(
+                    icon,
+                    label,
+                    PendingIntent.getBroadcast(
+                        this,
+                        action.hashCode(),
+                        Intent(action).setPackage(packageName),
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                ).build()
+
+            val actions = mutableListOf<NotificationCompat.Action>()
+            if (canPrev) {
+                actions.add(mediaAction(ACTION_MEDIA_PREV, android.R.drawable.ic_media_previous, "上一集"))
+            }
+            actions.add(
+                mediaAction(
+                    if (isPlaying) ACTION_MEDIA_PAUSE else ACTION_MEDIA_PLAY,
+                    if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
+                    if (isPlaying) "暂停" else "播放"
+                )
+            )
+            if (canNext) {
+                actions.add(mediaAction(ACTION_MEDIA_NEXT, android.R.drawable.ic_media_next, "下一集"))
+            }
+
+            val contentIntent = PendingIntent.getActivity(
+                this,
+                0,
+                Intent(this, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(this, MEDIA_CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(artist)
+                .setContentIntent(contentIntent)
+                .setOngoing(isPlaying)
+                .setOnlyAlertOnce(true)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            for (action in actions) builder.addAction(action)
+            builder.setStyle(
+                MediaStyleNotificationCompat.MediaStyle()
+                    .setMediaSession(session.sessionToken)
+                    .setShowActionsInCompactView(
+                        *IntArray(actions.size.coerceAtMost(3)) { it }
+                    )
+            )
+
+            (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .notify(MEDIA_NOTIFICATION_ID, builder.build())
+            mediaNotificationShown = true
+        } catch (error: Throwable) {
+            // 通知权限被拒等场景静默失败，不影响页面播放
+            Log.w(TAG, "show media notification failed", error)
+        }
+    }
+
+    /** 网页离开播放页 / 停止播放：取消通知并清空会话状态 */
+    private fun stopMediaSession() {
+        runOnUiThread {
+            try {
+                if (mediaNotificationShown) {
+                    (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                        .cancel(MEDIA_NOTIFICATION_ID)
+                    mediaNotificationShown = false
+                }
+                mediaSession?.setPlaybackState(
+                    PlaybackStateCompat.Builder()
+                        .setActions(0)
+                        .setState(PlaybackStateCompat.STATE_NONE, 0L, 0f)
+                        .build()
+                )
+            } catch (error: Throwable) {
+                Log.w(TAG, "mediaStop failed", error)
+            }
+        }
+    }
+
+    /** 通知按钮 / 耳机媒体键 / 锁屏控件 → 转发给网页统一入口 */
+    private fun dispatchMediaCommandToJs(cmd: String, seekSec: Long = -1L) {
+        runOnUiThread {
+            try {
+                val arg = if (seekSec >= 0) ", $seekSec" else ""
+                webView.evaluateJavascript(
+                    "window.__kvideoMediaCommand && window.__kvideoMediaCommand('$cmd'$arg);",
+                    null
+                )
+            } catch (error: Throwable) {
+                Log.w(TAG, "dispatch media command failed", error)
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
     // APK 自更新：DownloadManager 下载到公共 Download 目录，完成后拉起安装
     // ------------------------------------------------------------------
 
@@ -784,6 +1047,110 @@ class MainActivity : ComponentActivity() {
                     startActivity(Intent.createChooser(sendIntent, "分享洋芋影视"))
                 } catch (error: Exception) {
                     Log.w(TAG, "shareText failed", error)
+                }
+            }
+        }
+
+        /**
+         * 网页播放器上报媒体状态（JSON）：
+         * { isPlaying, title, artist, album, position(ms), duration(ms), canNext, canPrev }
+         * 用于驱动系统媒体通知栏（锁屏 / 下拉媒体卡片）
+         */
+        @JavascriptInterface
+        fun mediaUpdate(json: String) {
+            updateMediaSession(json)
+        }
+
+        /** 网页离开播放页 / 停止播放：取消系统媒体通知 */
+        @JavascriptInterface
+        fun mediaStop() {
+            stopMediaSession()
+        }
+
+        /**
+         * 网页播放器请求屏幕方向：
+         * "landscape" → 视频全屏，SENSOR_LANDSCAPE（横左/横右跟随传感器，不倒立，
+         *               并覆盖系统旋转锁定——视频全屏强制横屏是行业惯例）；
+         * "reset"     → 退出全屏，交还系统设置（USER：尊重旋转锁定，且不出现倒立竖屏）
+         */
+        @JavascriptInterface
+        fun setOrientation(mode: String) {
+            runOnUiThread {
+                requestedOrientation = when (mode) {
+                    "landscape" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                    else -> ActivityInfo.SCREEN_ORIENTATION_USER
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // DLNA 投屏：SSDP 搜索 + AVTransport 控制，结果经 CustomEvent 回推网页
+        // ------------------------------------------------------------------
+
+        /** 网页请求搜索局域网 DLNA 设备；结果经 kvideo-dlna-devices 事件回推 */
+        @JavascriptInterface
+        fun dlnaSearch() {
+            DlnaManager.ensureMulticastLock(this@MainActivity)
+            DlnaManager.search { devices ->
+                val array = org.json.JSONArray()
+                for (device in devices) {
+                    array.put(
+                        org.json.JSONObject()
+                            .put("udn", device.udn)
+                            .put("name", device.name)
+                    )
+                }
+                dispatchDlnaEvent("kvideo-dlna-devices", array.toString())
+            }
+        }
+
+        /**
+         * 网页发起投屏（udn 来自最近一次搜索结果）；
+         * 结果经 kvideo-dlna-cast 事件回推 { ok, udn, name, message? }
+         */
+        @JavascriptInterface
+        fun dlnaCast(udn: String, url: String, title: String) {
+            val device = DlnaManager.findDevice(udn)
+            if (device == null) {
+                dispatchDlnaEvent(
+                    "kvideo-dlna-cast",
+                    org.json.JSONObject()
+                        .put("ok", false)
+                        .put("udn", udn)
+                        .put("message", "设备已失效，请重新搜索")
+                        .toString()
+                )
+                return
+            }
+            DlnaManager.cast(device, url, title) { ok, message ->
+                val payload = org.json.JSONObject()
+                    .put("ok", ok)
+                    .put("udn", udn)
+                    .put("name", device.name)
+                if (!message.isNullOrBlank()) payload.put("message", message)
+                dispatchDlnaEvent("kvideo-dlna-cast", payload.toString())
+            }
+        }
+
+        @JavascriptInterface
+        fun dlnaPause() = DlnaManager.pause { _, _ -> }
+
+        @JavascriptInterface
+        fun dlnaResume() = DlnaManager.resume { _, _ -> }
+
+        @JavascriptInterface
+        fun dlnaStop() = DlnaManager.stop { _, _ -> }
+
+        /** 原生 → 网页事件统一出口（payload 为 JSON 对象/数组字面量） */
+        private fun dispatchDlnaEvent(name: String, payload: String) {
+            runOnUiThread {
+                try {
+                    webView.evaluateJavascript(
+                        "window.dispatchEvent(new CustomEvent('$name', { detail: $payload }));",
+                        null
+                    )
+                } catch (error: Throwable) {
+                    Log.w(TAG, "dispatch $name failed", error)
                 }
             }
         }

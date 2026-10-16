@@ -19,6 +19,14 @@ interface KVideoAndroidBridge {
    * "reset" → 退出全屏，交还系统设置
    */
   setOrientation?: (mode: 'landscape' | 'reset') => void;
+  /** DLNA 投屏：搜索局域网设备，结果经 window 'kvideo-dlna-devices' 事件回推 [{udn,name}] */
+  dlnaSearch?: () => void;
+  /** DLNA 投屏：向指定设备推送播放地址，结果经 'kvideo-dlna-cast' 事件回推 {ok,udn,name,message?} */
+  dlnaCast?: (udn: string, url: string, title: string) => void;
+  /** DLNA 投屏：暂停 / 继续 / 停止（操作当前投屏会话） */
+  dlnaPause?: () => void;
+  dlnaResume?: () => void;
+  dlnaStop?: () => void;
 }
 
 declare global {

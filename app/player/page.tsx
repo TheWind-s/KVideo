@@ -17,6 +17,7 @@ import { useSourceSpeedTest } from '@/lib/hooks/useSourceSpeedTest';
 import { useHistory } from '@/lib/store/history-store';
 import { FavoritesSidebar } from '@/components/favorites/FavoritesSidebar';
 import { FavoriteButton } from '@/components/favorites/FavoriteButton';
+import { DlnaCast } from '@/components/player/DlnaCast';
 import { settingsStore } from '@/lib/store/settings-store';
 import { premiumModeSettingsStore } from '@/lib/store/premium-mode-settings';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
@@ -637,6 +638,18 @@ function PlayerContent() {
                       </span>
                     )}
                   </div>
+
+                  {/* DLNA 投屏（仅新版 APK 内渲染） */}
+                  {playUrl && (
+                    <DlnaCast
+                      url={playUrl}
+                      title={`${videoData.vod_name || title || '视频'}${
+                        videoData.episodes?.[currentEpisode]?.name
+                          ? ` ${videoData.episodes[currentEpisode].name}`
+                          : ''
+                      }`}
+                    />
+                  )}
 
                   {/* 播放小贴士 */}
                   <div className="text-[11px] leading-[1.35] text-[var(--text-color-secondary)] text-right space-y-0.5">
