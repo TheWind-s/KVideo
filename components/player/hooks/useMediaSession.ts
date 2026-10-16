@@ -15,15 +15,15 @@ interface UseMediaSessionProps {
 }
 
 /**
- * MediaSession API 集成
+ * 媒体通知栏集成（双通道）：
  *
- * - 桌面 Chrome：在系统媒体通知里显示控制
- * - Android WebView/App：系统媒体通知带「投屏」按钮（走系统 MediaRouter，支持 Chromecast/DLNA/蓝牙）
- * - iOS Safari：锁屏界面上显示控制
+ * 1. 原生桥通道（洋芋影视 App / Android WebView）：
+ *    WebView 不支持 Web MediaSession API，改由 JS 桥上报状态给原生
+ *    MediaSessionCompat → 系统媒体通知栏（锁屏 / 下拉媒体卡片），
+ *    通知按钮 / 耳机媒体键经 window.__kvideoMediaCommand 调回网页。
  *
- * 注意：Android WebView 默认支持 MediaSession（API 23+），
- * 但需要在 AndroidManifest.xml 声明 android.permission.FOREGROUND_SERVICE
- * 和注册 MediaPlayer.Callback 才能完整生效；纯网页侧只需设置 metadata + handlers 即可触发系统通知。
+ * 2. 标准 Web MediaSession 通道（Chrome 桌面 / Android 浏览器 / iOS Safari）：
+ *    设置 metadata + action handlers，由浏览器自行渲染系统媒体通知。
  */
 export function useMediaSession({
     videoRef,
@@ -40,41 +40,25 @@ export function useMediaSession({
     handlersRef.current = { onNextEpisode, onPreviousEpisode, onSeekTo };
 
     useEffect(() => {
-        if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+        const video = videoRef.current;
+        if (typeof window === 'undefined' || !video) return;
         if (!title) return;
 
-        const video = videoRef.current;
-        if (!video) return;
+        const displayTitle = episodeName ? `${title} · ${episodeName}` : title;
 
-        // ---------- metadata ----------
-        const artwork = poster
-            ? [{ src: poster, sizes: '512x512', type: 'image/jpeg' }]
-            : [];
-
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: episodeName ? `${title} · ${episodeName}` : title,
-            artist: title,
-            album: totalEpisodes && totalEpisodes > 1
-                ? `共 ${totalEpisodes} 集`
-                : '洋芋影视',
-            artwork,
-        });
-
-        // ---------- action handlers ----------
+        // ---------- 共用控制命令（通知按钮 / 锁屏控件都会走到这里） ----------
         const tryAction = (fn?: () => void) => {
             try { fn?.(); } catch { /* ignore */ }
         };
-
         const playHandler = () => {
             video.play().catch(() => { /* ignore autoplay rejection */ });
         };
         const pauseHandler = () => {
             video.pause();
         };
-        const seekToHandler = (details?: MediaSessionActionDetails) => {
-            const t = details?.seekTime;
-            if (typeof t === 'number' && isFinite(t) && t >= 0) {
-                video.currentTime = Math.min(t, video.duration || t);
+        const seekToHandler = (time?: number) => {
+            if (typeof time === 'number' && isFinite(time) && time >= 0) {
+                video.currentTime = Math.min(time, video.duration || time);
                 handlersRef.current.onSeekTo?.(video.currentTime);
             }
         };
@@ -91,10 +75,98 @@ export function useMediaSession({
             video.currentTime = 0;
         };
 
+        const runCommand = (cmd: string, arg?: number) => {
+            switch (cmd) {
+                case 'play': playHandler(); break;
+                case 'pause': pauseHandler(); break;
+                case 'seekto': seekToHandler(arg); break;
+                case 'seekforward': seekForwardHandler(); break;
+                case 'seekbackward': seekBackwardHandler(); break;
+                case 'next': nextHandler(); break;
+                case 'prev': prevHandler(); break;
+                case 'stop': stopHandler(); break;
+            }
+        };
+
+        // ---------- 通道 1：原生桥（App WebView） ----------
+        const bridge = window.KVideoAndroid;
+        if (typeof bridge?.mediaUpdate === 'function') {
+            window.__kvideoMediaCommand = runCommand;
+
+            let lastReport = 0;
+            const report = (force = false) => {
+                const now = Date.now();
+                if (!force && now - lastReport < 1000) return;
+                lastReport = now;
+                try {
+                    bridge.mediaUpdate?.(JSON.stringify({
+                        isPlaying: !video.paused && !video.ended,
+                        title: displayTitle,
+                        artist: title,
+                        album: totalEpisodes && totalEpisodes > 1 ? `共 ${totalEpisodes} 集` : '洋芋影视',
+                        position: Math.round((video.currentTime || 0) * 1000),
+                        duration: Math.round((video.duration || 0) * 1000),
+                        canNext: !!onNextEpisode,
+                        canPrev: !!onPreviousEpisode,
+                    }));
+                } catch { /* ignore */ }
+            };
+
+            const onPlayB = () => report(true);
+            const onPauseB = () => report(true);
+            const onMetaB = () => report(true);
+            const onEndedB = () => report(true);
+            const onTimeB = () => {
+                // timeupdate 高频触发：仅在播放中按 1s 节流上报进度
+                if (!video.paused) report();
+            };
+
+            video.addEventListener('play', onPlayB);
+            video.addEventListener('pause', onPauseB);
+            video.addEventListener('loadedmetadata', onMetaB);
+            video.addEventListener('durationchange', onMetaB);
+            video.addEventListener('seeked', onMetaB);
+            video.addEventListener('ended', onEndedB);
+            video.addEventListener('timeupdate', onTimeB);
+            report(true);
+
+            return () => {
+                video.removeEventListener('play', onPlayB);
+                video.removeEventListener('pause', onPauseB);
+                video.removeEventListener('loadedmetadata', onMetaB);
+                video.removeEventListener('durationchange', onMetaB);
+                video.removeEventListener('seeked', onMetaB);
+                video.removeEventListener('ended', onEndedB);
+                video.removeEventListener('timeupdate', onTimeB);
+                delete window.__kvideoMediaCommand;
+                try {
+                    bridge.mediaStop?.();
+                } catch { /* ignore */ }
+            };
+        }
+
+        // ---------- 通道 2：标准 Web MediaSession（浏览器环境） ----------
+        if (!('mediaSession' in navigator)) return;
+
+        // ---------- metadata ----------
+        const artwork = poster
+            ? [{ src: poster, sizes: '512x512', type: 'image/jpeg' }]
+            : [];
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: displayTitle,
+            artist: title,
+            album: totalEpisodes && totalEpisodes > 1
+                ? `共 ${totalEpisodes} 集`
+                : '洋芋影视',
+            artwork,
+        });
+
+        // ---------- action handlers ----------
         const actions: [MediaSessionAction, (details?: MediaSessionActionDetails) => void][] = [
             ['play', playHandler],
             ['pause', pauseHandler],
-            ['seekto', seekToHandler],
+            ['seekto', (details) => seekToHandler(details?.seekTime)],
             ['seekforward', seekForwardHandler],
             ['seekbackward', seekBackwardHandler],
             ['stop', stopHandler],
@@ -129,20 +201,11 @@ export function useMediaSession({
         const onPlay = () => updateState();
         const onPause = () => updateState();
         const onLoaded = () => updateState();
-        const onTimeUpdate = () => {
-            // 频率太高，节流：仅在整 5 秒变化时同步
-            const sec = Math.floor(video.currentTime || 0);
-            if (sec !== (video as any).__lastMsSec) {
-                (video as any).__lastMsSec = sec;
-                updateState();
-            }
-        };
 
         video.addEventListener('play', onPlay);
         video.addEventListener('pause', onPause);
         video.addEventListener('loadedmetadata', onLoaded);
         video.addEventListener('durationchange', onLoaded);
-        video.addEventListener('timeupdate', onTimeUpdate);
         updateState();
 
         return () => {
@@ -150,7 +213,6 @@ export function useMediaSession({
             video.removeEventListener('pause', onPause);
             video.removeEventListener('loadedmetadata', onLoaded);
             video.removeEventListener('durationchange', onLoaded);
-            video.removeEventListener('timeupdate', onTimeUpdate);
             // 离开页面时清除状态，避免幽灵通知
             try {
                 navigator.mediaSession.metadata = null;
