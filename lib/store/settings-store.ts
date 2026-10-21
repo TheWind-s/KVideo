@@ -69,7 +69,7 @@ export interface AppSettings {
   danmakuFontSize: number; // px
   danmakuDisplayArea: number; // 0.25 | 0.5 | 0.75 | 1.0
   locale: LocaleOption; // 'zh-CN' (Simplified) or 'zh-TW' (Traditional)
-  blockedCategories: string[]; // Category keywords to hide from search results (e.g. '伦理')
+  blockedCategories: string[]; // Category keywords to hide from search results (e.g. '花絮')
 }
 
 import { exportSettings, importSettings, SEARCH_HISTORY_KEY, WATCH_HISTORY_KEY } from './settings-helpers';

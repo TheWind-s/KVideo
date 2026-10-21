@@ -9,6 +9,7 @@ import { NextRequest } from 'next/server';
 import { searchVideos } from '@/lib/api/client';
 import { getSourceName } from '@/lib/utils/source-names';
 import { traditionalToSimplified } from '@/lib/utils/chinese-convert';
+import { isAdultVideo } from '@/lib/utils/adult-filter';
 
 export const runtime = 'edge';
 
@@ -81,7 +82,9 @@ export async function POST(request: NextRequest) {
             );
             const endTime = performance.now();
             const latency = Math.round(endTime - startTime);
-            const videos = result[0]?.results || [];
+            const videos = (result[0]?.results || []).filter(
+              (video: any) => !isAdultVideo(video)
+            );
             const pagecount = result[0]?.pagecount ?? 1;
 
             completedSources++;
@@ -123,7 +126,9 @@ export async function POST(request: NextRequest) {
                   const pageResult = await searchVideos(
                     normalizedQuery, [source], pg, sourceController.signal
                   );
-                  const pageVideos = pageResult[0]?.results || [];
+                  const pageVideos = (pageResult[0]?.results || []).filter(
+                    (video: any) => !isAdultVideo(video)
+                  );
                   totalVideosFound += pageVideos.length;
 
                   if (pageVideos.length > 0 && !signal.aborted) {

@@ -180,7 +180,7 @@
         "name": "爱蛋资源",
         "baseUrl": "https://lovedan.net/api.php/provide/vod",
         "group": "normal",
-        "enabled": true,
+        "enabled": false,
         "priority": 23
     },
     {
@@ -489,7 +489,7 @@
     },
     {
         "id": "hsck",
-        "name": "黄色仓库",
+        "name": "预留源A",
         "baseUrl": "https://hsckzy.vip/api.php/provide/vod",
         "group": "premium",
         "enabled": true,
@@ -513,7 +513,7 @@
     },
     {
         "id": "xrbsp",
-        "name": "淫水机资源站",
+        "name": "预留源B",
         "baseUrl": "https://www.xrbsp.com/api/json.php",
         "group": "premium",
         "enabled": true,
@@ -537,7 +537,7 @@
     },
     {
         "id": "pgxdy",
-        "name": "黄AV资源站",
+        "name": "预留源C",
         "baseUrl": "https://www.pgxdy.com/api/json.php",
         "group": "premium",
         "enabled": true,
@@ -553,7 +553,7 @@
     },
     {
         "id": "madou",
-        "name": "91麻豆",
+        "name": "预留源D",
         "baseUrl": "https://91md.me/api.php/provide/vod",
         "group": "premium",
         "enabled": true,
@@ -585,7 +585,7 @@
     },
     {
         "id": "fanhao",
-        "name": "番号资源",
+        "name": "预留源E",
         "baseUrl": "http://fhapi9.com/api.php/provide/vod",
         "group": "premium",
         "enabled": true,
